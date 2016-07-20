@@ -1,26 +1,3 @@
-Last login: Tue Jul 19 15:24:54 on ttys001
-Tonys-Air:~ q$ python
-Python 2.7.12 |Continuum Analytics, Inc.| (default, Jul  2 2016, 17:43:17) 
-[GCC 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.11.00)] on darwin
-Type "help", "copyright", "credits" or "license" for more information.
-Anaconda is brought to you by Continuum Analytics.
-Please check out: http://continuum.io/thanks and https://anaconda.org
->>> 250.34+1+57.5+43.94
-352.78000000000003
->>> 352.78/4
-88.195
->>> 
-Tonys-Air:~ q$ cd Projects/Biophysics/Cytoskeleton/
-Tonys-Air:Cytoskeleton q$ ls
-Makefile	florian.C~	modFlorian.C~	render.h~
-a.out		gr.h		notes		test.html
-first		gr3.h		positions.txt	tony.C
-florian.C	modFlorian.C	render.h	tony.C~
-Tonys-Air:Cytoskeleton q$ emacs tony.C
-
-
-
-
 
 #include <iostream>
 #include <vector>
