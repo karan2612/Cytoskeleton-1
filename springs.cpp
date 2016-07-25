@@ -12,7 +12,7 @@ private:
 public:
   Ball (double, double); // ctor
 
-  double x,y;
+  double x,y,z;
   double vx,vy;
 
   double T,U;
@@ -38,6 +38,7 @@ double k = 2;
 double L = 1; 
 double m = 1;
 double dt = 0.1;
+float tmax=100;
 
 vector<Ball> ball_v;
 vector<Spring> spring_v;
@@ -49,6 +50,7 @@ Ball::Ball (double x0, double y0) {
 
   x = x0;
   y = y0;
+  z = 0;
 
   vx = 0;
   vy = 0;  
@@ -208,21 +210,65 @@ void physics() {
 
 }
 
+void writePositions(FILE* f) {
+
+  int n = ball_v.size();
+  for(int j=0; j<n; j++) {
+    fprintf(f, "%f" , ball_v[j].x);
+    fprintf(f, " %f", ball_v[j].y);
+    fprintf(f, " %f", ball_v[j].z);
+    fprintf(f, "\n");
+  }
+
+  fprintf(f, "\n"); //new timestep
+}
+
+void draw() {
+
+  /* 
+     rather than write and read from .txt
+     what if I ported directly into an array?
+  */
+
+
+  int n = ball_v.size();
+
+  double x[3*n];
+
+  for(int i=0; i<n; i++) {
+
+    x[3*i + 0] = ball_v[i].x;
+    x[3*i + 1] = ball_v[i].y;
+    x[3*i + 2] = ball_v[i].z;
+
+  }
+
+  /*
+  for (int i = 0; i < 3*n; i++) 
+    cout << x[i] << ", ";
+  cout << endl;
+  */
+
+
+}
+
 
 int main() {
 
   init();
 
   FILE* fout;
-  fout = fopen("positions.txt", "w");
+  fout = fopen("newPositions.txt", "w");
+  int T = (int)tmax/dt;
+  int n = ball_v.size();
+  fprintf(fout, "%i\n" , T);
+  fprintf(fout, "%i\n\n" , n);
 
   float t=0;
-  
-  while (t<100) {
+  while (t<tmax) {
     physics();
-    cout << "\n" << endl;
-
-    fprintf(fout, "%f\n", ball_v[1].x);
+    writePositions(fout);
+    //draw();
 
     t += dt;
   }
