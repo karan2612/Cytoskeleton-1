@@ -2,6 +2,8 @@
 #include <vector>
 #include <math.h>
 
+#define PI 3.14159265
+
 using namespace std;
 
 /* Class def */
@@ -11,6 +13,7 @@ private:
 
 public:
   Ball (double, double); // ctor
+  Ball (double, double, int); //polar
 
   double x,y,z;
   double vx,vy;
@@ -27,7 +30,7 @@ public:
   int n1,n2; //nodes index the balls that the spring is attached to
 
   Spring (int, int); //constructor
-  double xeq; //equilibrium length (F = 0)
+  double eql; //equilibrium length (F = 0)
   double Energy(vector<Ball> &v);
   double Length();
 };
@@ -48,6 +51,7 @@ vector<Spring> spring_v;
 /* function def */
 Ball::Ball (double x0, double y0) {
 
+  //cout << "I'm ctor 1: " << x0 << endl;
   x = x0;
   y = y0;
   z = 0;
@@ -58,9 +62,29 @@ Ball::Ball (double x0, double y0) {
   F = 0;
 }
 
+Ball::Ball (double r, double t, int hex) {
+
+  //cout << "I'm ctor 2: " << endl;
+  if (!hex) {
+    cout << " but I should be ctor 1.. " << endl;
+    Ball(r, t);
+
+  } else {
+
+    x = r * cos(t);
+    y = r * sin(t);
+
+    z = 0;
+    vx = 0;
+    vy = 0;  
+    F = 0;
+  }
+
+}
+
 Spring::Spring (int b1, int b2) {
 
-  //xeq = L;
+  //eql = L;
   /* connect balls to nodes at construction */
   n1 = b1;
   n2 = b2;
@@ -99,14 +123,14 @@ double Spring::Energy(vector<Ball> &v) {
 
   double mag = sqrt(dx*dx + dy*dy);
 
-  double E = k/2 * (mag - xeq) * (mag - xeq);
+  double E = k/2 * (mag - eql) * (mag - eql);
 
   if (0) {
-  cout << "Energy: dx dy mag xeq E\n "
+  cout << "Energy: dx dy mag eql E\n "
        << dx << ", "  
        << dy << ", " 
        << mag << ", " 
-       << xeq << ", " 
+       << eql << ", " 
        << E << endl;
   }
   return E;
@@ -114,7 +138,64 @@ double Spring::Energy(vector<Ball> &v) {
 //maybe it would be better to store this as a force
 
 
-void init() {
+void hexInit() {
+
+  Ball a0(0.001,0,0);
+  ball_v.push_back(a0);
+
+  double sd = PI/3; //'Sixty Degrees'
+
+  /* Can I automate this in a 2line for loop? */
+  Ball a1(1, 0*sd, 1);
+  Ball a2(1, 1*sd, 1);
+  Ball a3(1, 2*sd, 1);
+  Ball a4(1, 3*sd, 1);
+  Ball a5(1, 4*sd, 1);
+  Ball a6(1, 5*sd, 1);
+
+  ball_v.push_back(a1);
+  ball_v.push_back(a2);
+  ball_v.push_back(a3);
+  ball_v.push_back(a4);
+  ball_v.push_back(a5);
+  ball_v.push_back(a6);
+
+  /* now for springs */
+  Spring s01 = Spring(0,1);
+  Spring s02 = Spring(0,2);
+  Spring s03 = Spring(0,3);
+  Spring s04 = Spring(0,4);
+  Spring s05 = Spring(0,5);
+  Spring s06 = Spring(0,6);
+
+  Spring s12 = Spring(1,2);
+  Spring s23 = Spring(2,3);
+  Spring s34 = Spring(3,4);
+  Spring s45 = Spring(4,5);
+  Spring s56 = Spring(5,6);
+  Spring s61 = Spring(6,1);
+
+  spring_v.push_back(s01);
+  spring_v.push_back(s02);
+  spring_v.push_back(s03);
+  spring_v.push_back(s04);
+  spring_v.push_back(s05);
+  spring_v.push_back(s06);
+  spring_v.push_back(s12);
+  spring_v.push_back(s23);
+  spring_v.push_back(s34);
+  spring_v.push_back(s45);
+  spring_v.push_back(s56);
+  spring_v.push_back(s61);
+
+  for (int i=0; i<12; i++) {
+    spring_v[i].eql = 1;
+  }
+
+}
+
+
+void initString() {
 
   /* Sets Initial Conditions
      we start w 1D spring for 1D forces*/
@@ -132,8 +213,8 @@ void init() {
   Spring s1 = Spring(0,1);
   Spring s2 = Spring(1,2);
 
-  s1.xeq = (a2.x - a1.x) / 2;
-  s2.xeq = (a2.x - a1.x) / 2;
+  s1.eql = (a2.x - a1.x) / 2;
+  s2.eql = (a2.x - a1.x) / 2;
 
   spring_v.push_back(s1);
   spring_v.push_back(s2);
@@ -180,7 +261,7 @@ void physics() {
     spr = &spring_v[j];
 
     L = spr->Length();
-    X = spr->xeq;
+    X = spr->eql;
     /* 
        either both are attracted
        or both repelled
@@ -252,10 +333,29 @@ void draw() {
 
 }
 
+void show() {
+  cout << "showing..." << endl;
+
+
+  int n = ball_v.size();
+  cout << n << endl;
+
+  Ball* foo;
+  for (int i=0; i<n; i++) {
+    foo = &ball_v.at(i);
+    //foo = &ball_v[i];
+    cout << foo->x << " "
+	 << foo->y << endl;
+  }
+  getc(stdin);
+}
+
 
 int main() {
 
-  init();
+  cout << "hello world" << endl;
+  hexInit();
+  show();
 
   FILE* fout;
   fout = fopen("newPositions.txt", "w");
