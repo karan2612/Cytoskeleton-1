@@ -379,7 +379,7 @@ void show() {
   Ball* foo;
   for (int i=0; i<n; i++) {
     foo = &ball_v.at(i);
-    //foo = &ball_v[i];
+
     cout << foo->x << " "
 	 << foo->y << endl;
   }

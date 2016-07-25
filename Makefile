@@ -1,4 +1,4 @@
-%.out: %.C
+%.out: %.cpp
 	g++ $^ -lgr -lgr3 \
 	-L/usr/local/gr/lib/ \
 	-o $@

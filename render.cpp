@@ -9,9 +9,6 @@
 
 using namespace std;
 
-void read(){
-}
-
 int main(void) {
 
   double num;
@@ -20,10 +17,10 @@ int main(void) {
   ifstream infile("newPositions.txt", ios::in);
   string str;
 
-  int T,X;
+  int T,N,X;
   infile >> T;
-  infile >> X;
-  X = 3*X;
+  infile >> N;
+  X = 3*N;
   float in[T][X];
   for(int t=0; t<T; t++) {
     for(int x=0; x<X; x++) {
@@ -32,10 +29,17 @@ int main(void) {
     }
   }
 
-  float colors[] = {1,0,0, 1,1,1, 1,0,0};
-  float radii[] = {0.25, 0.25, 0.25};
-  float directions[] = {1, 0, 0};
+  float colors[X];  
+  float radii[N];
+  float directions[] = {1, 0, 0}; //was ist das?
 
+  for(int i=0; i<N; i++) {
+    colors[3*i + 0] = 1;
+    colors[3*i + 1] = 0;
+    colors[3*i + 2] = 0;
+
+    radii[i] = 0.25;
+  }
 
   float cyl_colors[] = {1,1,1, 1,1,1};
   float cyl_radius[] = {0.1, 0.1};
@@ -51,8 +55,8 @@ int main(void) {
     positions = in[t];
     
     gr3_clear();
-    gr3_drawspheremesh(3, positions, colors, radii);
-    gr3_drawcylindermesh(2, positions, cyl_dir,
+    gr3_drawspheremesh(6, positions, colors, radii);
+    gr3_drawcylindermesh(12, positions, cyl_dir,
 			 cyl_colors, cyl_radius, lengths);
 
     gr_clearws();
