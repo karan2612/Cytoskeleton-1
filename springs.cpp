@@ -14,6 +14,7 @@ private:
 public:
   Ball (double, double); // ctor
   Ball (double, double, int); //polar
+  double dist2ball(Ball &);
 
   double x,y,z;
   double vx,vy;
@@ -32,7 +33,7 @@ public:
 
   Spring (int, int); //constructor
   double eql; //equilibrium length (F = 0)
-  double Energy(vector<Ball> &v);
+  double Energy(vector<Ball> &);
   double Length();
 };
 
@@ -84,6 +85,24 @@ Ball::Ball (double r, double t, int hex) {
   }
 
 }
+
+
+double Ball::dist2ball(Ball &b) {
+
+  double x,y,z;
+  double dx,dy,dz;
+  
+  dx = b.x - x;
+  dy = b.y - y;
+  dz = b.z - z;
+
+  double L;
+  L = sqrt( dx*dx + dy*dy + dz*dz );
+
+  return L;
+}
+//b1->dist2ball(b2);
+
 
 Spring::Spring (int b1, int b2) {
 
@@ -226,7 +245,7 @@ void updatePosition(Ball &b) {
   b.x += b.vx * dt;
   b.y += b.vy * dt;
 
-  if (1) {
+  if (0) {
     cout << b.x << ", "
 	 << b.vx << ", "
 	 << ax << endl;
@@ -248,7 +267,7 @@ void ForceSprings() {
   double x1, x2, y1, y2;
 
   size_t N = spring_v.size();
-  cout << "N springs: " << N << endl;
+  //cout << "N springs: " << N << endl;
   for (size_t j=0; j<N; j++) {
 
     spr = &spring_v[j];
@@ -257,7 +276,7 @@ void ForceSprings() {
     X = spr->eql;
     F = -k * (L - X); // magnitude 
 
-    if (1) {
+    if (0) {
       cout << "Spring " << j << endl;
       cout << "(L, X, F): "
 	   << L << ", "
@@ -280,9 +299,6 @@ void ForceSprings() {
     x1 = b1->x;
     x2 = b2->x;
 
-    cout << j1 << ", " << j2 << "\n"
-	 << x1 << ", " << x2 << endl;
-
     b1->Fx += F * (x1-x2) / L; 
     b2->Fx -= F * (x1-x2) / L;
 
@@ -292,7 +308,11 @@ void ForceSprings() {
     b1->Fy += F * (y1-y2) / L; 
     b2->Fy -= F * (y1-y2) / L;
 
+    if (0) {
+    cout << j1 << ", " << j2 << "\n"
+	 << x1 << ", " << x2 << endl;
     printf("\n");    
+    }
   }
 
 }
@@ -302,7 +322,7 @@ void ForceSprings() {
 void physics() {
 
   size_t N = ball_v.size(); 
-  cout << "N balls: " << N << endl;
+  //cout << "N balls: " << N << endl;
 
   /* Zeros Forces */
   for (size_t j=0; j<N; j++) {
@@ -317,14 +337,12 @@ void physics() {
   /* add brownian motion */
 
   /* loop particles */
-  cout << "(x, v, a)" << endl;
+  //cout << "(x, v, a)" << endl;
   for (size_t j=0; j<N; j++) {
 
-    cout << "Ball " << j << endl;
+    //cout << "Ball " << j << endl;
     updatePosition(ball_v[j]); 
-    printf("\n");
   }
-  //updatePosition(ball_v[1]);   
 
 }
 
@@ -341,34 +359,76 @@ void writePositions(FILE* f) {
   fprintf(f, "\n"); //new timestep
 }
 
-void draw() {
+void writeSprings(FILE* f) {
 
-  /* 
-     rather than write and read from .txt
-     what if I ported directly into an array?
-  */
+  Spring *spr;
+  Ball *b1, *b2;
+  int n = spring_v.size();
+  float dx,dy,dz;
+  float L;
+  float nx,ny,nz;
 
+  /* fetch information about position, direction, L */
+  for(int j=0; j<n; j++) {
 
-  int n = ball_v.size();
+    spr = &spring_v.at(j);
+    b1 = &ball_v.at(spr->n1);
+    b2 = &ball_v.at(spr->n2);
 
-  double x[3*n];
+    dx = b2->x - b1->x;
+    dy = b2->y - b1->y;
+    dz = b2->z - b1->z;
 
-  for(int i=0; i<n; i++) {
+    L = sqrt( dx*dx + dy*dy + dz*dz );    
 
-    x[3*i + 0] = ball_v[i].x;
-    x[3*i + 1] = ball_v[i].y;
-    x[3*i + 2] = ball_v[i].z;
+    nx = dx/L;
+    ny = dy/L;
+    nz = dz/L;
+    
+    fprintf(f, "%f" , b1->x);
+    fprintf(f, " %f", b1->y);
+    fprintf(f, " %f", b1->z);
 
+    fprintf(f, " %f", dx);
+    fprintf(f, " %f", dy);
+    fprintf(f, " %f", dz);
+
+    fprintf(f, " %f\n", L);
   }
-
+  fprintf(f, "\n");
   /*
-  for (int i = 0; i < 3*n; i++) 
-    cout << x[i] << ", ";
-  cout << endl;
+    float a[3], b[3], d[3], n[3];
+
+    d = {b2->x - b1->x,
+	 b2->y - b1->y,
+	 b2->z - b1->z};
+
+    for(int i=0; i<3; i++) {
+      n[i] = d[i]/L;
+    }
+
+    //float d[3] = {x/L, y/L, z/L};
   */
-
-
 }
+
+/* what is the cost of not passing by ref? */
+float distBall(Ball a, Ball b) {
+
+  float x,y,z;
+  x = b.x - a.x;
+  y = b.y - a.y;
+  z = b.z - a.z;
+
+  float L;
+  L = sqrt( x*x + y*y + z*z );
+
+  return L;
+
+
+  float d[3] = {x/L, y/L, z/L};
+  // how to return this?
+}
+
 
 void show() {
   cout << "showing..." << endl;
@@ -393,24 +453,34 @@ int main() {
   hexInit();
   //show();
 
-  FILE* fout;
-  fout = fopen("newPositions.txt", "w");
-  int T = (int)tmax/dt;
-  int n = ball_v.size();
-  fprintf(fout, "%i\n" , T);
-  fprintf(fout, "%i\n\n" , n);
+  FILE *f1, *f2;
+  f1 = fopen("newBalls.txt", "w");
+  f2 = fopen("newSprings.txt", "w");
 
-  float t=0;
-  while (t<tmax) {
+  int T, B, S; 
+  T = (int)tmax/dt;
+  B = ball_v.size();
+  S = spring_v.size();
+
+  fprintf(f1, "%i\n" , T);
+  fprintf(f1, "%i\n\n" , B);
+  fprintf(f2, "%i\n\n" , S);
+
+  float t=0, tel=0; //ellapsed time
+  while (tel<tmax) {
+
     physics();
     //getc(stdin);
 
-    writePositions(fout);
-    //draw();
+    writePositions(f1);
+    writeSprings(f2);
 
-    t += dt;
+    tel += dt;
+    t++;
   }
 
-  fclose(fout);
+  fclose(f1);
+  fclose(f2);
+
   return 0;
 }
