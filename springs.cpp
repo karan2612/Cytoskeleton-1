@@ -466,17 +466,18 @@ int main() {
   fprintf(f1, "%i\n\n" , B);
   fprintf(f2, "%i\n\n" , S);
 
-  float t=0, tel=0; //ellapsed time
-  while (tel<tmax) {
+  float t=0; int ts=0; 
+  while (t<tmax) {
 
     physics();
     //getc(stdin);
 
-    writePositions(f1);
-    writeSprings(f2);
-
-    tel += dt;
-    t++;
+    if (ts % 10 == 0) {
+      writePositions(f1);
+      writeSprings(f2);
+    }
+    t += dt;
+    ts++;
   }
 
   fclose(f1);
