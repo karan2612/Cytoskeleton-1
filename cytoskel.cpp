@@ -8,6 +8,7 @@ int main() {
   cout << " initializing system.." << endl;
   hexInit();
 
+  cout << " initializing file.." << endl;
   FILE *f1, *f2;
   f1 = fopen("newBalls.txt", "w");
   f2 = fopen("newSprings.txt", "w");
@@ -20,6 +21,10 @@ int main() {
   fprintf(f1, "%i\n" , T);
   fprintf(f1, "%i\n\n" , B);
   fprintf(f2, "%i\n\n" , S);
+
+  cout << " initializing rand.." << endl;
+  unsigned int saat = (unsigned int)time(0); //ok?
+  randi.seed(saat);
   /* End Init */
 
 
@@ -63,6 +68,15 @@ void physics() {
   ForceSprings();
 
   /* add brownian motion */
+
+  double D = 0.1;
+  for (size_t j=0; j<N; j++) {
+    ball_v[j].Fx += sqrt(2*D*dt)*randi.randNorm(0,1);  //dividing by sqrt(dt) bc a_x needs to mult sqrt(dt)
+    ball_v[j].Fy += sqrt(2*D*dt)*randi.randNorm(0,1);
+  }
+  //+sqrt(2*Dr)*randi.randNorm(0,1)*sqdt; 
+  //sqrt(2*D)*rand.norm()*sqdt
+  //+  sqrt[2 D dt] * randomGaussian
 
   /* loop particles */
 

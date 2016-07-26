@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include "MersenneTwister.h"
 
 #define PI 3.14159265
 
@@ -39,6 +40,7 @@ public:
 
 
 /* General Declaration */
+MTRand randi;
 double k = 2; 
 double L = 1; 
 double m = 1;
