@@ -9,21 +9,21 @@
 
 using namespace std;
 
-int main(void) {
+int main() {
 
+  cout << "begin rendering.." << endl;
   double num;
-  vector<double> x(1024);
 
-  ifstream infile("newPositions.txt", ios::in);
-
+  /* Read in Balls */
+  ifstream dataBalls("newBalls.txt", ios::in);
   int T,N,X;
-  infile >> T;
-  infile >> N;
+  dataBalls >> T;
+  dataBalls >> N;
   X = 3*N;
   float in[T][X];
   for(int t=0; t<T; t++) {
     for(int x=0; x<X; x++) {
-      infile >> num;
+      dataBalls >> num;
       in[t][x] = num;
     }
   }
@@ -40,24 +40,17 @@ int main(void) {
     radii[i] = 0.25;
   }
 
-  /*
-    float cyl_colors[] = {1,1,1, 1,1,1};
-    float cyl_radius[] = {0.1, 0.1};
-    float cyl_dir[] = {1,0,0, 1,0,0};
-    float lengths[] = {in[t][3] - in[t][0],
-		       in[t][6] - in[t][3]};
-    //this is savage. what if non adjacent?
-   */
-
-  ifstream inf2("newSprings.txt", ios::in);
+  cout << " finished reading balls" << endl;
+  /* Read in Springs */
+  ifstream dataSprings("newSprings.txt", ios::in);
   int S,Y,V;
-  inf2 >> S;
-  Y = 7*S;
-  V = 3*S; //bad names
+  dataSprings >> S;
+  Y = 7*S; // data * n springs
+  V = 3*S; // vect * n springs
   float in2[T][Y];
   for(int t=0; t<T; t++) {
     for(int y=0; y<Y; y++) {
-      inf2 >> num;
+      dataSprings >> num;
       in2[t][y] = num;
     }
   }
@@ -85,14 +78,15 @@ int main(void) {
   float cyl_col[V];
   float cyl_rad[S];
   for(int j=0; j<S; j++) {
-    cyl_rad[j] = 0.1;
-
     cyl_col[3*j + 0] = 1;
     cyl_col[3*j + 1] = 1;
     cyl_col[3*j + 2] = 1;
+
+    cyl_rad[j] = 0.1;
   }
+  cout << " finished reading springs" << endl;
 
-
+  /* Animate Video */
   for(int t=0; t<T; t++) {
 
     positions = in[t];
@@ -109,8 +103,9 @@ int main(void) {
     gr3_drawimage(0, 1, 0, 1, 500, 500, GR3_DRAWABLE_GKS);
     gr_updatews();    
 
+    cout << t << endl;
   }
-
+  cout << "rendering complete! press any key <> to contiune" << endl;
   getc(stdin);
   return 0;
 }
