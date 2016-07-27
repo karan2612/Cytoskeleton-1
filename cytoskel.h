@@ -44,9 +44,12 @@ public:
 MTRand randi;
 double k = 2; 
 double m = 1;
-double dt = 0.05;
+double dt = 0.01;
 float tmax = 100;
-int tw = 10;
+float msd = 0;
+bool _msd = true;
+FILE *f1, *f2, *f3;
+
 
 vector<Ball> ball_v;
 vector<Spring> spring_v;
@@ -56,12 +59,16 @@ void meshInit();
 vector<Spring> substringInit(int, vector<Ball> &, vector<Spring> &);
 float distBall(Ball, Ball);
 void updatePosition(Ball &);
+void updateBrownianPosition(Ball &b);
 void ForceSprings();
 void physics();
 
 void writePositions(FILE*);
 void writeSprings(FILE*);
 
+float calcMSD(float*);
+void initMSD();
+void MSD();
 
 /* function def */
 Ball::Ball (double x0, double y0) {

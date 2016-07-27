@@ -103,7 +103,7 @@ int main() {
     gr3_drawimage(0, 1, 0, 1, 500, 500, GR3_DRAWABLE_GKS);
     gr_updatews();    
 
-    cout << t << endl;
+    //cout << t << endl;
   }
   cout << "rendering complete! press any key <> to contiune" << endl;
   getc(stdin);

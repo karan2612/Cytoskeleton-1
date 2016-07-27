@@ -10,7 +10,6 @@ int main() {
   meshInit();
 
   cout << " initializing file.." << endl;
-  FILE *f1, *f2;
   f1 = fopen("newBalls.txt", "w");
   f2 = fopen("newSprings.txt", "w");
 
@@ -26,22 +25,33 @@ int main() {
   cout << " initializing rand.." << endl;
   unsigned int saat = (unsigned int)time(0); //ok?
   randi.seed(saat);
+
+  // init msd 
+  int N = ball_v.size();
+  float x0[N];
+  for(int i=0; i<N; i++) {
+    x0[i] = ball_v.at(i).x;
+  }
+  if (_msd) f3 = fopen("outMSD.txt", "w");
   /* End Init */
-
-
+  
   cout << " beginning physics.." << endl;
   float t=0; int ts=0; 
   while (t<tmax) {
 
+    t += dt;
+    ts++;
+
+    if (_msd) {
+      msd = calcMSD(x0);
+      fprintf(f3, "%f\n", msd);
+      continue;
+    }
     physics();
     //getc(stdin);
 
     writePositions(f1);
     writeSprings(f2);
-    if (ts % tw == 0) {
-    }
-    t += dt;
-    ts++;
   }
 
   cout << " finished physics.." << endl;
@@ -50,6 +60,34 @@ int main() {
 
   cout << "files written." << endl;
   return 0;
+}
+
+/* new development: no spring, just brown*/
+float calcMSD(float *x0) {
+
+  size_t N = ball_v.size(); 
+
+  float xt[N];
+  float sum=0;  
+
+  for (size_t j=0; j<N; j++) {
+    /* Zeros Forces */
+    ball_v[j].Fx = 0;
+    ball_v[j].Fy = 0;
+
+    /* update physics (no springs) */
+    updateBrownianPosition(ball_v[j]); 
+
+    /* compute MSD */
+    xt[j] = ball_v.at(j).x;
+    sum += (xt[j] - x0[j]) * (xt[j] - x0[j]);
+  }
+
+  return sum;
+}
+
+void initMSD() {
+
 }
 
 
@@ -70,10 +108,12 @@ void physics() {
 
   /* add brownian motion */
   if (0) {
+
   double D = 0.1;
+
   for (size_t j=0; j<N; j++) {
-    ball_v[j].Fx += sqrt(2*D*dt)*randi.randNorm(0,1);  //dividing by sqrt(dt) bc a_x needs to mult sqrt(dt)
-    ball_v[j].Fy += sqrt(2*D*dt)*randi.randNorm(0,1);
+    ball_v[j].Fx += sqrt(2*D/dt)*randi.randNorm(0,1);  //dividing by sqrt(dt) bc a_x needs to mult sqrt(dt)
+    ball_v[j].Fy += sqrt(2*D/dt)*randi.randNorm(0,1);
   }
 
   }
@@ -81,7 +121,8 @@ void physics() {
   /* loop particles */
 
   for (size_t j=0; j<N; j++) {
-    updatePosition(ball_v[j]); 
+    //updatePosition(ball_v[j]); 
+    updateBrownianPosition(ball_v[j]); 
   }
 
 }
@@ -132,15 +173,19 @@ void ForceSprings() {
     b1->Fy += F * (y1-y2) / L; 
     b2->Fy -= F * (y1-y2) / L;
 
-    if (0) {
-    cout << j1 << ", " << j2 << "\n"
-	 << x1 << ", " << x2 << endl;
-    printf("\n");    
-    }
   }
 
 }
 
+void updateBrownianPosition(Ball &b) {
+
+  double D = 0.1;
+
+  //update x: see wiki
+  b.x += (b.Fx/m)*dt + sqrt(2*D*dt)*randi.randNorm(0,1); 
+  b.y += (b.Fy/m)*dt + sqrt(2*D*dt)*randi.randNorm(0,1); 
+
+}
 void updatePosition(Ball &b) {
 
   //compute a
