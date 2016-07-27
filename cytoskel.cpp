@@ -6,7 +6,8 @@ int main() {
 
   /* Begin Init */
   cout << " initializing system.." << endl;
-  hexInit();
+  //hexInit();
+  meshInit();
 
   cout << " initializing file.." << endl;
   FILE *f1, *f2;
@@ -68,15 +69,14 @@ void physics() {
   ForceSprings();
 
   /* add brownian motion */
-
+  if (0) {
   double D = 0.1;
   for (size_t j=0; j<N; j++) {
     ball_v[j].Fx += sqrt(2*D*dt)*randi.randNorm(0,1);  //dividing by sqrt(dt) bc a_x needs to mult sqrt(dt)
     ball_v[j].Fy += sqrt(2*D*dt)*randi.randNorm(0,1);
   }
-  //+sqrt(2*Dr)*randi.randNorm(0,1)*sqdt; 
-  //sqrt(2*D)*rand.norm()*sqdt
-  //+  sqrt[2 D dt] * randomGaussian
+
+  }
 
   /* loop particles */
 

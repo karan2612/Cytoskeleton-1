@@ -31,6 +31,7 @@ class Spring {
 public:
 
   int n1,n2; //nodes index the balls that the spring is attached to
+  double L;
   double eql; //equilibrium length (F = 0)
 
   Spring (int, int); //constructor
@@ -42,7 +43,6 @@ public:
 /* General Declaration */
 MTRand randi;
 double k = 2; 
-double L = 1; 
 double m = 1;
 double dt = 0.05;
 float tmax = 100;
@@ -50,15 +50,9 @@ int tw = 10;
 
 vector<Ball> ball_v;
 vector<Spring> spring_v;
-/*
-Ball::Ball(double, double);
-Ball::Ball(double, double, int);
-double Ball::dist2ball(Ball &);
-Spring::Spring(int, int);
-double Spring::Length();
-double Spring::Energy(vector<Ball> &);
-*/
+
 void hexInit();
+void meshInit();
 vector<Spring> substringInit(int, vector<Ball> &, vector<Spring> &);
 float distBall(Ball, Ball);
 void updatePosition(Ball &);
@@ -125,11 +119,17 @@ double Ball::dist2ball(Ball &b) {
 
 Spring::Spring (int b1, int b2) {
 
-  //eql = L;
   /* connect balls to nodes at construction */
   n1 = b1;
   n2 = b2;
 
+  /* sets equilibrium length 
+     as some fraction f of initial length */
+  float f = 0.95;
+  L = Length();
+
+  eql = f * L;
+  
 }
 
 double Spring::Length(){
@@ -164,7 +164,70 @@ double Spring::Energy(vector<Ball> &v) {
 }
 
 
+void meshInit() {
 
+  int N=3;
+  double L=1.2;  
+
+  double a = -L*(N - 1./2);
+  double x0=a,y0=a;
+
+  double h = sqrt(3)*L/2;
+
+  /* Build Balls */
+  for (int y=0; y<2*N; y++) {
+
+    if (y%2 == 0) {
+      //even
+      for (int x=0; x<2*N; x++) {
+	Ball b(x0 + x*L, y0 + y*h); 
+	ball_v.push_back(b);
+      }
+
+    } else {
+      //odd
+      for (int x=0; x<2*N; x++) {
+	Ball b(x0+L/2 + x*L, y0 + y*h);
+	ball_v.push_back(b);
+      }
+    }
+  }
+
+  /* Build Springs */
+  int j;
+  for (int y=0; y<2*N; y++) {
+    for (int x=0; x<2*N; x++) {
+
+      j = 2*N*y + x;
+
+      if (x != 2*N-1) {
+	Spring s(j,j+1);
+	spring_v.push_back(s);
+      }
+
+      if (y != 2*N-1) {
+	Spring s1(j, j+2*N);
+	spring_v.push_back(s1);
+
+	if (y%2 == 0) { 
+	  /* y even */
+	  if (x != 0) {
+	    Spring s0(j, j+2*N - 1);
+	    spring_v.push_back(s0);
+	  }
+	} else { 
+	  /* y odd */
+	  if (x != 2*N-1) {
+	    Spring s0(j, j+2*N + 1);
+	    spring_v.push_back(s0);
+	  }
+	}
+      }// y != 2*N-1
+
+    }
+  }
+
+}
 void hexInit() {
 
   Ball a0(0.001,0,0);
@@ -215,6 +278,7 @@ void hexInit() {
   spring_v.push_back(s56);
   spring_v.push_back(s61);
 
+  // now redundant
   for (int i=0; i<12; i++) {
     spring_v[i].eql = 0.95;
   } 
