@@ -45,8 +45,9 @@ public:
 MTRand randi;
 double k = 2; 
 double m = 1;
-double dt = 0.01;
-float tmax = 100;
+float tmax = 100; //time absolute stop
+double dt = 0.01; //time step physics
+int ts = 10;      //time step rendering
 float msd = 0;
 bool _msd = false;
 FILE *f1, *f2, *f3;
@@ -57,8 +58,7 @@ vector<Spring> v_springs;
 
 void hexInit();
 void meshInit();
-//vector<Spring> substringInit(int, vector<Ball> &, vector<Spring> &);
-vector<Spring> springstringInit(vector<Spring> vs);
+vector<Spring> subInit(vector<Spring> vs);
 
 float distBall(Ball, Ball);
 void updatePosition(Ball &);
@@ -87,31 +87,22 @@ Ball::Ball (double x0, double y0) {
   Fy = 0;
 
   idx = v_balls.size();
+  pid = 1;
 }
 
 Ball::Ball (double r, double t, int hex) {
 
   if (!hex) {
-    //cout << " but I should be ctor 1.. " << endl;
     Ball(r, t);
 
   } else {
 
     x = r * cos(t);
     y = r * sin(t);
-    z = 0;
-
-    vx = 0;
-    vy = 0;  
-
-    Fx=0;
-    Fy=0;
-
-    idx = v_balls.size();
+    Ball(x, y);
   }
 
 }
-
 
 double Ball::dist2ball(Ball &b) {
 
@@ -179,7 +170,7 @@ double Spring::Energy(vector<Ball> &v) {
 
 void meshInit() {
 
-  int N=3;
+  int N=2;
   double L=1.2;  
 
   double a = -L*(N - 1./2);
@@ -313,10 +304,12 @@ float distBall(Ball a, Ball b) {
   return L;
 }
 
-vector<Spring> springstringInit(vector<Spring> vs) {
+vector<Spring> subInit(vector<Spring> vs) {
+
   //makes a copy
+  vector<Ball> vb = v_balls;
   int N = vs.size();
-  int n = 3; //subdivisions
+  int n = 2; //new springs :: 1 should be identity
   Spring *spr;
   Ball *b1, *b2;
   double dx, dy;
@@ -329,26 +322,31 @@ vector<Spring> springstringInit(vector<Spring> vs) {
     int j1 = spr->n1; 
     int j2 = spr->n2; 
 
-    b1 = &v_balls.at(j1);
-    b2 = &v_balls.at(j2);
+    b1 = &vb.at(j1);
+    b2 = &vb.at(j2);
 
     dx = (b2->x - b1->x) / n;
     dy = (b2->y - b1->y) / n;
+    //cout << dx*dx + dy*dy << endl;
 
     //create N-1 new balls
-    for (int i=1; i<n-1; i++) {
-      Ball b(b1->x + i*dx, b1->y + i*dy);
+    int k = v_balls.size(); //used later
+    for (int i=1; i<n; i++) {
+      Ball b(b1->x + i*dx, 
+	     b1->y + i*dy);
+      b.pid = 0;
       v_balls.push_back(b);
     }
 
     //connect w N new springs (+2 old balls)
-    int k = v_balls.size() - 1;
+    if (n == 1) return vs;
 
-    newSpring_v.push_back( Spring(j2, k) ); 
-    for (int i=1; i<n; i++) {
-      newSpring_v.push_back( Spring(k-i, k-i-1) );
+    newSpring_v.push_back( Spring(j1,k) ); 
+    for (int i=1; i<n-1; i++) {
+      newSpring_v.push_back( Spring(k, k+1) );
+      k++;
     }
-    newSpring_v.push_back( Spring(k-n, j1) );
+    newSpring_v.push_back( Spring(k, j2) );
 
   }
 
@@ -395,13 +393,15 @@ void show() {
 
   int n = v_balls.size();
   cout << "Total Balls: " << n << endl;
+  cout << "(i, idx, pid)" << endl;
 
   Ball* foo;
   for (int i=0; i<n; i++) {
     foo = &v_balls.at(i);
 
     cout << i << " "
-	 << foo->idx << endl;
+	 << foo->idx << " "
+	 << foo->pid << endl;
   }
   getc(stdin);
 }

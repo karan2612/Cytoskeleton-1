@@ -8,22 +8,24 @@ int main() {
   cout << " initializing system.." << endl;
   //hexInit();
   meshInit();
-  show();
 
   cout << v_springs.size() << endl;
-  //v_springs = springstringInit(v_springs);
+    v_springs = subInit(v_springs);
   cout << v_springs.size() << endl;
+  show();  
 
   cout << " initializing file.." << endl;
   f1 = fopen("newBalls.txt", "w");
   f2 = fopen("newSprings.txt", "w");
 
-  int T, B, S; 
-  T = (int)tmax/dt;
+  int B, S, tout; 
   B = v_balls.size();
   S = v_springs.size();
+  tout = (int) tmax/dt;
+  tout = tout/ts;
 
-  fprintf(f1, "%i\n" , T);
+  fprintf(f1, "%i\n" , tout);
+  cout << "predicted time steps: " << tout << endl;
   fprintf(f1, "%i\n\n" , B);
   fprintf(f2, "%i\n\n" , S);
 
@@ -41,23 +43,29 @@ int main() {
   /* End Init */
   
   cout << " beginning physics.." << endl;
-  float t=0; int ts=0; 
-  while (t<tmax) {
+  float T=0; 
+  int t=0; int t_count=0;
+  while (T<tmax) {
 
-    t += dt;
-    ts++;
-
-    if (_msd) {
-      msd = calcMSD(x0);
-      fprintf(f3, "%f\n", msd);
-      continue;
-    }
     physics();
     //getc(stdin);
 
-    writePositions(f1);
-    writeSprings(f2);
+    if (t % ts == 0) {
+      t_count++;
+      if (_msd) {
+	msd = calcMSD(x0);
+	fprintf(f3, "%f\n", msd);
+	continue;
+      }
+
+      writePositions(f1);
+      writeSprings(f2);
+    }
+
+    T += dt;
+    t++;
   }
+  cout << "actual time steps: " << t_count << endl;
 
   cout << " finished physics.." << endl;
   fclose(f1);
@@ -110,20 +118,7 @@ void physics() {
   /* add springs */
   ForceSprings();
 
-  /* add brownian motion */
-  if (0) {
-
-  double D = 0.1;
-
-  for (size_t j=0; j<N; j++) {
-    v_balls[j].Fx += sqrt(2*D/dt)*randi.randNorm(0,1);  //dividing by sqrt(dt) bc a_x needs to mult sqrt(dt)
-    v_balls[j].Fy += sqrt(2*D/dt)*randi.randNorm(0,1);
-  }
-
-  }
-
   /* loop particles */
-
   for (size_t j=0; j<N; j++) {
     updatePosition(v_balls[j]); 
     //updateBrownianPosition(v_balls[j]); 
