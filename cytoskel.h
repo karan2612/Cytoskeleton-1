@@ -66,7 +66,7 @@ void updateBrownianPosition(Ball &b);
 void ForceSprings();
 void physics();
 
-void writePositions(FILE*);
+void writeBalls(FILE*);
 void writeSprings(FILE*);
 
 float calcMSD(float*);
@@ -307,7 +307,6 @@ float distBall(Ball a, Ball b) {
 vector<Spring> subInit(vector<Spring> vs) {
 
   //makes a copy
-  vector<Ball> vb = v_balls;
   int N = vs.size();
   int n = 2; //new springs :: 1 should be identity
   Spring *spr;
@@ -319,18 +318,17 @@ vector<Spring> subInit(vector<Spring> vs) {
   for (int j=0; j<N; j++) {
     spr = &vs.at(j);
 
+    int k = v_balls.size(); 
     int j1 = spr->n1; 
     int j2 = spr->n2; 
 
-    b1 = &vb.at(j1);
-    b2 = &vb.at(j2);
+    b1 = &v_balls.at(j1);
+    b2 = &v_balls.at(j2);
 
     dx = (b2->x - b1->x) / n;
     dy = (b2->y - b1->y) / n;
-    //cout << dx*dx + dy*dy << endl;
 
     //create N-1 new balls
-    int k = v_balls.size(); //used later
     for (int i=1; i<n; i++) {
       Ball b(b1->x + i*dx, 
 	     b1->y + i*dy);
@@ -352,10 +350,6 @@ vector<Spring> subInit(vector<Spring> vs) {
 
   return newSpring_v;
 }
-
-
-
-
 
 
 
@@ -387,7 +381,7 @@ void initString() {
 }
 
 
-//also for deletion
+/* for misc purposes */
 void show() {
   cout << "showing..." << endl;
 

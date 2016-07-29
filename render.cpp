@@ -15,34 +15,50 @@ int main() {
   double num;
 
   /* Read in Balls */
-  ifstream dataBalls("newBalls.txt", ios::in);
+  ifstream dataBalls("balls.dat", ios::in);
   int T,N,X;
   dataBalls >> T;
   dataBalls >> N;
   X = 3*N;
   float in[T][X];
+  float colors[X];  
+  float radii[N];
+  float *positions;
+
+  // col & rad
+  int pid;
+  for(int i=0; i<N; i++) {
+
+    dataBalls >> pid;
+    /* Particle ID
+       1: anchor, red
+       2: middle, white
+    */
+    if (pid) {
+      colors[3*i + 0] = 1;
+      colors[3*i + 1] = 0;
+      colors[3*i + 2] = 0;
+      radii[i] = 0.25;
+    } else {
+      colors[3*i + 0] = 1;
+      colors[3*i + 1] = 1;
+      colors[3*i + 2] = 1;
+      radii[i] = 0.15;
+    }
+
+  }
+
+  // pos
   for(int t=0; t<T; t++) {
     for(int x=0; x<X; x++) {
       dataBalls >> num;
       in[t][x] = num;
     }
   }
-
-  float *positions;
-  float colors[X];  
-  float radii[N];
-
-  for(int i=0; i<N; i++) {
-    colors[3*i + 0] = 1;
-    colors[3*i + 1] = 0;
-    colors[3*i + 2] = 0;
-
-    radii[i] = 0.25;
-  }
-
   cout << " finished reading balls" << endl;
+
   /* Read in Springs */
-  ifstream dataSprings("newSprings.txt", ios::in);
+  ifstream dataSprings("springs.dat", ios::in);
   int S,Y,V;
   dataSprings >> S;
   Y = 7*S; // data * n springs
@@ -87,6 +103,8 @@ int main() {
   cout << " finished reading springs" << endl;
 
   /* Animate Video */
+  cout << "Begin looping.. " << endl;
+  //setenv("GKS_WSTYPE", "mov", 1); //
   for(int t=0; t<T; t++) {
 
     positions = in[t];
@@ -106,6 +124,7 @@ int main() {
     //cout << t << endl;
   }
   cout << "rendering complete! press any key <> to contiune" << endl;
+
   getc(stdin);
   return 0;
 }

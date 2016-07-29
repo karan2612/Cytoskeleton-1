@@ -10,13 +10,13 @@ int main() {
   meshInit();
 
   cout << v_springs.size() << endl;
-    v_springs = subInit(v_springs);
+  v_springs = subInit(v_springs);
   cout << v_springs.size() << endl;
-  show();  
+  //show();  
 
   cout << " initializing file.." << endl;
-  f1 = fopen("newBalls.txt", "w");
-  f2 = fopen("newSprings.txt", "w");
+  f1 = fopen("balls.dat", "w");
+  f2 = fopen("springs.dat", "w");
 
   int B, S, tout; 
   B = v_balls.size();
@@ -38,7 +38,10 @@ int main() {
   float x0[N];
   for(int i=0; i<N; i++) {
     x0[i] = v_balls.at(i).x;
+    //write ball col
+    fprintf(f1, " %i", v_balls[i].pid);
   }
+  fprintf(f1, "\n\n");
   if (_msd) f3 = fopen("outMSD.txt", "w");
   /* End Init */
   
@@ -58,7 +61,7 @@ int main() {
 	continue;
       }
 
-      writePositions(f1);
+      writeBalls(f1);
       writeSprings(f2);
     }
 
@@ -211,11 +214,11 @@ void updatePosition(Ball &b) {
 }
 
 
-void writePositions(FILE* f) {
+void writeBalls(FILE* f) {
 
   int n = v_balls.size();
   for(int j=0; j<n; j++) {
-    fprintf(f, "%f" , v_balls[j].x);
+    fprintf(f, "%f ", v_balls[j].x);   
     fprintf(f, " %f", v_balls[j].y);
     fprintf(f, " %f", v_balls[j].z);
     fprintf(f, "\n");
