@@ -8,6 +8,11 @@ int main() {
   cout << " initializing system.." << endl;
   //hexInit();
   meshInit();
+  show();
+
+  cout << v_springs.size() << endl;
+  //v_springs = springstringInit(v_springs);
+  cout << v_springs.size() << endl;
 
   cout << " initializing file.." << endl;
   f1 = fopen("newBalls.txt", "w");
@@ -15,8 +20,8 @@ int main() {
 
   int T, B, S; 
   T = (int)tmax/dt;
-  B = ball_v.size();
-  S = spring_v.size();
+  B = v_balls.size();
+  S = v_springs.size();
 
   fprintf(f1, "%i\n" , T);
   fprintf(f1, "%i\n\n" , B);
@@ -27,10 +32,10 @@ int main() {
   randi.seed(saat);
 
   // init msd 
-  int N = ball_v.size();
+  int N = v_balls.size();
   float x0[N];
   for(int i=0; i<N; i++) {
-    x0[i] = ball_v.at(i).x;
+    x0[i] = v_balls.at(i).x;
   }
   if (_msd) f3 = fopen("outMSD.txt", "w");
   /* End Init */
@@ -65,24 +70,24 @@ int main() {
 /* new development: no spring, just brown*/
 float calcMSD(float *x0) {
 
-  size_t N = ball_v.size(); 
+  size_t N = v_balls.size(); 
 
   float xt[N];
   float sum=0;  
 
   for (size_t j=0; j<N; j++) {
     /* Zeros Forces */
-    ball_v[j].Fx = 0;
-    ball_v[j].Fy = 0;
+    v_balls[j].Fx = 0;
+    v_balls[j].Fy = 0;
 
     /* update physics (no springs) */
-    updateBrownianPosition(ball_v[j]); 
+    updateBrownianPosition(v_balls[j]); 
 
     /* compute MSD */
-    xt[j] = ball_v.at(j).x;
+    xt[j] = v_balls.at(j).x;
     sum += (xt[j] - x0[j]) * (xt[j] - x0[j]);
   }
-
+  sum = sum/N; //norm
   return sum;
 }
 
@@ -94,13 +99,12 @@ void initMSD() {
 /* Everything here should be called once per time step*/
 void physics() {
 
-  size_t N = ball_v.size(); 
+  size_t N = v_balls.size(); 
 
   /* Zeros Forces */
   for (size_t j=0; j<N; j++) {
-    ball_v[j].F  = 0;
-    ball_v[j].Fx = 0;
-    ball_v[j].Fy = 0;
+    v_balls[j].Fx = 0;
+    v_balls[j].Fy = 0;
   }
 
   /* add springs */
@@ -112,8 +116,8 @@ void physics() {
   double D = 0.1;
 
   for (size_t j=0; j<N; j++) {
-    ball_v[j].Fx += sqrt(2*D/dt)*randi.randNorm(0,1);  //dividing by sqrt(dt) bc a_x needs to mult sqrt(dt)
-    ball_v[j].Fy += sqrt(2*D/dt)*randi.randNorm(0,1);
+    v_balls[j].Fx += sqrt(2*D/dt)*randi.randNorm(0,1);  //dividing by sqrt(dt) bc a_x needs to mult sqrt(dt)
+    v_balls[j].Fy += sqrt(2*D/dt)*randi.randNorm(0,1);
   }
 
   }
@@ -121,8 +125,8 @@ void physics() {
   /* loop particles */
 
   for (size_t j=0; j<N; j++) {
-    //updatePosition(ball_v[j]); 
-    updateBrownianPosition(ball_v[j]); 
+    updatePosition(v_balls[j]); 
+    //updateBrownianPosition(v_balls[j]); 
   }
 
 }
@@ -138,10 +142,10 @@ void ForceSprings() {
   double L, X, F;
   double x1, x2, y1, y2;
 
-  size_t N = spring_v.size();
+  size_t N = v_springs.size();
   for (size_t j=0; j<N; j++) {
 
-    spr = &spring_v[j];
+    spr = &v_springs[j];
 
     L = spr->Length();
     X = spr->eql;
@@ -158,8 +162,8 @@ void ForceSprings() {
 
     j1 = spr->n1;
     j2 = spr->n2;
-    b1 = &ball_v[j1];
-    b2 = &ball_v[j2];
+    b1 = &v_balls[j1];
+    b2 = &v_balls[j2];
 
     x1 = b1->x;
     x2 = b2->x;
@@ -214,11 +218,11 @@ void updatePosition(Ball &b) {
 
 void writePositions(FILE* f) {
 
-  int n = ball_v.size();
+  int n = v_balls.size();
   for(int j=0; j<n; j++) {
-    fprintf(f, "%f" , ball_v[j].x);
-    fprintf(f, " %f", ball_v[j].y);
-    fprintf(f, " %f", ball_v[j].z);
+    fprintf(f, "%f" , v_balls[j].x);
+    fprintf(f, " %f", v_balls[j].y);
+    fprintf(f, " %f", v_balls[j].z);
     fprintf(f, "\n");
   }
 
@@ -230,7 +234,7 @@ void writeSprings(FILE* f) {
 
   Spring *spr;
   Ball *b1, *b2;
-  int n = spring_v.size();
+  int n = v_springs.size();
   float dx,dy,dz;
   float L;
   float nx,ny,nz;
@@ -238,9 +242,9 @@ void writeSprings(FILE* f) {
   /* fetch information about position, direction, L */
   for(int j=0; j<n; j++) {
 
-    spr = &spring_v.at(j);
-    b1 = &ball_v.at(spr->n1);
-    b2 = &ball_v.at(spr->n2);
+    spr = &v_springs.at(j);
+    b1 = &v_balls.at(spr->n1);
+    b2 = &v_balls.at(spr->n2);
 
     dx = b2->x - b1->x;
     dy = b2->y - b1->y;

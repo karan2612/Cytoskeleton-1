@@ -22,8 +22,9 @@ public:
 
   double T,U;
 
-  double F;
   double Fx,Fy;
+
+  int pid, idx;
 };
 
 class Spring {
@@ -47,16 +48,18 @@ double m = 1;
 double dt = 0.01;
 float tmax = 100;
 float msd = 0;
-bool _msd = true;
+bool _msd = false;
 FILE *f1, *f2, *f3;
 
 
-vector<Ball> ball_v;
-vector<Spring> spring_v;
+vector<Ball> v_balls;
+vector<Spring> v_springs;
 
 void hexInit();
 void meshInit();
-vector<Spring> substringInit(int, vector<Ball> &, vector<Spring> &);
+//vector<Spring> substringInit(int, vector<Ball> &, vector<Spring> &);
+vector<Spring> springstringInit(vector<Spring> vs);
+
 float distBall(Ball, Ball);
 void updatePosition(Ball &);
 void updateBrownianPosition(Ball &b);
@@ -80,9 +83,10 @@ Ball::Ball (double x0, double y0) {
   vx = 0;
   vy = 0;  
 
-  F = 0; //to be retired
   Fx = 0;
   Fy = 0;
+
+  idx = v_balls.size();
 }
 
 Ball::Ball (double r, double t, int hex) {
@@ -95,13 +99,15 @@ Ball::Ball (double r, double t, int hex) {
 
     x = r * cos(t);
     y = r * sin(t);
-
     z = 0;
+
     vx = 0;
     vy = 0;  
-    F = 0;
+
     Fx=0;
     Fy=0;
+
+    idx = v_balls.size();
   }
 
 }
@@ -145,8 +151,8 @@ double Spring::Length(){
 
   double dx, dy, L;
   
-  Ball a = ball_v[n1];
-  Ball b = ball_v[n2];
+  Ball a = v_balls[n1];
+  Ball b = v_balls[n2];
 
   dx = b.x - a.x;
   dy = b.y - a.y;
@@ -188,14 +194,14 @@ void meshInit() {
       //even
       for (int x=0; x<2*N; x++) {
 	Ball b(x0 + x*L, y0 + y*h); 
-	ball_v.push_back(b);
+	v_balls.push_back(b);
       }
 
     } else {
       //odd
       for (int x=0; x<2*N; x++) {
 	Ball b(x0+L/2 + x*L, y0 + y*h);
-	ball_v.push_back(b);
+	v_balls.push_back(b);
       }
     }
   }
@@ -209,24 +215,24 @@ void meshInit() {
 
       if (x != 2*N-1) {
 	Spring s(j,j+1);
-	spring_v.push_back(s);
+	v_springs.push_back(s);
       }
 
       if (y != 2*N-1) {
 	Spring s1(j, j+2*N);
-	spring_v.push_back(s1);
+	v_springs.push_back(s1);
 
 	if (y%2 == 0) { 
 	  /* y even */
 	  if (x != 0) {
 	    Spring s0(j, j+2*N - 1);
-	    spring_v.push_back(s0);
+	    v_springs.push_back(s0);
 	  }
 	} else { 
 	  /* y odd */
 	  if (x != 2*N-1) {
 	    Spring s0(j, j+2*N + 1);
-	    spring_v.push_back(s0);
+	    v_springs.push_back(s0);
 	  }
 	}
       }// y != 2*N-1
@@ -238,7 +244,7 @@ void meshInit() {
 void hexInit() {
 
   Ball a0(0.001,0,0);
-  ball_v.push_back(a0);
+  v_balls.push_back(a0);
 
   double sd = PI/3; //'Sixty Degrees'
 
@@ -250,12 +256,12 @@ void hexInit() {
   Ball a5(1, 4*sd, 1);
   Ball a6(1, 5*sd, 1);
 
-  ball_v.push_back(a1);
-  ball_v.push_back(a2);
-  ball_v.push_back(a3);
-  ball_v.push_back(a4);
-  ball_v.push_back(a5);
-  ball_v.push_back(a6);
+  v_balls.push_back(a1);
+  v_balls.push_back(a2);
+  v_balls.push_back(a3);
+  v_balls.push_back(a4);
+  v_balls.push_back(a5);
+  v_balls.push_back(a6);
 
   /* now for springs */
   Spring s01 = Spring(0,1);
@@ -272,22 +278,22 @@ void hexInit() {
   Spring s56 = Spring(5,6);
   Spring s61 = Spring(6,1);
 
-  spring_v.push_back(s01);
-  spring_v.push_back(s02);
-  spring_v.push_back(s03);
-  spring_v.push_back(s04);
-  spring_v.push_back(s05);
-  spring_v.push_back(s06);
-  spring_v.push_back(s12);
-  spring_v.push_back(s23);
-  spring_v.push_back(s34);
-  spring_v.push_back(s45);
-  spring_v.push_back(s56);
-  spring_v.push_back(s61);
+  v_springs.push_back(s01);
+  v_springs.push_back(s02);
+  v_springs.push_back(s03);
+  v_springs.push_back(s04);
+  v_springs.push_back(s05);
+  v_springs.push_back(s06);
+  v_springs.push_back(s12);
+  v_springs.push_back(s23);
+  v_springs.push_back(s34);
+  v_springs.push_back(s45);
+  v_springs.push_back(s56);
+  v_springs.push_back(s61);
 
   // now redundant
   for (int i=0; i<12; i++) {
-    spring_v[i].eql = 0.95;
+    v_springs[i].eql = 0.95;
   } 
 
 }
@@ -307,13 +313,48 @@ float distBall(Ball a, Ball b) {
   return L;
 }
 
+vector<Spring> springstringInit(vector<Spring> vs) {
+  //makes a copy
+  int N = vs.size();
+  int n = 3; //subdivisions
+  Spring *spr;
+  Ball *b1, *b2;
+  double dx, dy;
+  
+  vector<Spring> newSpring_v;
+  //for each spring
+  for (int j=0; j<N; j++) {
+    spr = &vs.at(j);
 
-vector<Spring> substringInit(int N, vector<Ball> &vb, vector<Spring> &vs) {
+    int j1 = spr->n1; 
+    int j2 = spr->n2; 
 
-  /* subdivides each spring into N smaller springs*/
-  vector<Spring> foo;
-  return foo;
+    b1 = &v_balls.at(j1);
+    b2 = &v_balls.at(j2);
+
+    dx = (b2->x - b1->x) / n;
+    dy = (b2->y - b1->y) / n;
+
+    //create N-1 new balls
+    for (int i=1; i<n-1; i++) {
+      Ball b(b1->x + i*dx, b1->y + i*dy);
+      v_balls.push_back(b);
+    }
+
+    //connect w N new springs (+2 old balls)
+    int k = v_balls.size() - 1;
+
+    newSpring_v.push_back( Spring(j2, k) ); 
+    for (int i=1; i<n; i++) {
+      newSpring_v.push_back( Spring(k-i, k-i-1) );
+    }
+    newSpring_v.push_back( Spring(k-n, j1) );
+
+  }
+
+  return newSpring_v;
 }
+
 
 
 
@@ -330,9 +371,9 @@ void initString() {
   Ball b0(1,0);
   Ball a2(3,0); 
 
-  ball_v.push_back(a1);
-  ball_v.push_back(b0);
-  ball_v.push_back(a2);
+  v_balls.push_back(a1);
+  v_balls.push_back(b0);
+  v_balls.push_back(a2);
 
   /* need to build springs */
 
@@ -342,8 +383,8 @@ void initString() {
   s1.eql = (a2.x - a1.x) / 2;
   s2.eql = (a2.x - a1.x) / 2;
 
-  spring_v.push_back(s1);
-  spring_v.push_back(s2);
+  v_springs.push_back(s1);
+  v_springs.push_back(s2);
 
 }
 
@@ -352,15 +393,15 @@ void initString() {
 void show() {
   cout << "showing..." << endl;
 
-  int n = ball_v.size();
-  cout << n << endl;
+  int n = v_balls.size();
+  cout << "Total Balls: " << n << endl;
 
   Ball* foo;
   for (int i=0; i<n; i++) {
-    foo = &ball_v.at(i);
+    foo = &v_balls.at(i);
 
-    cout << foo->x << " "
-	 << foo->y << endl;
+    cout << i << " "
+	 << foo->idx << endl;
   }
   getc(stdin);
 }
