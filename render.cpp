@@ -104,7 +104,7 @@ int main() {
 
   /* Animate Video */
   cout << "Begin looping.. " << endl;
-  //setenv("GKS_WSTYPE", "mov", 1); //
+  //  setenv("GKS_WSTYPE", "mov", 1); //
   for(int t=0; t<T; t++) {
 
     positions = in[t];

@@ -15,15 +15,9 @@ private:
 public:
   Ball (double, double); // ctor
   Ball (double, double, int); //polar
-  double dist2ball(Ball &);
-
-  double x,y,z;
-  double vx,vy;
+  double r[3],v[3],F[3];
 
   double T,U;
-
-  double Fx,Fy;
-
   int pid, idx;
 };
 
@@ -36,55 +30,65 @@ public:
   double eql; //equilibrium length (F = 0)
 
   Spring (int, int); //constructor
-  double Energy(vector<Ball> &);
+  //  double Energy(vector<Ball> &);
   double Length();
 };
 
 
 /* General Declaration */
 MTRand randi;
+
+bool _msd = false;
+int nBalls, nSprings, nTime; 
+
+float tmax = 100; //time absolute stop
+float dt = 0.005; //time step physics
+int ts = 8;      //time step rendering
+
+float msd = 0;
 double k = 2; 
 double m = 1;
-float tmax = 100; //time absolute stop
-double dt = 0.01; //time step physics
-int ts = 10;      //time step rendering
-float msd = 0;
-bool _msd = false;
-FILE *f1, *f2, *f3;
 
+FILE *f1, *f2, *f3;
+FILE *kx, *ky;
 
 vector<Ball> v_balls;
 vector<Spring> v_springs;
 
+void init();
 void hexInit();
 void meshInit();
 vector<Spring> subInit(vector<Spring> vs);
+void filesInit();
+void filesClose();
+void initKaran();
 
-float distBall(Ball, Ball);
+void physics();
+void timeStep();
+void ForceSprings();
+void BoundarySprings(); //?
 void updatePosition(Ball &);
 void updateBrownianPosition(Ball &b);
-void ForceSprings();
-void physics();
+
+float calcMSD(float**);
+float calcMSDx(float*);
+
+float distBall(Ball, Ball);
 
 void writeBalls(FILE*);
 void writeSprings(FILE*);
-
-float calcMSD(float*);
-void initMSD();
-void MSD();
+void writeKaranXY(FILE*,FILE*);
 
 /* function def */
 Ball::Ball (double x0, double y0) {
 
-  x = x0;
-  y = y0;
-  z = 0;
-
-  vx = 0;
-  vy = 0;  
-
-  Fx = 0;
-  Fy = 0;
+  for(int i=0; i<3; i++) {
+    r[i]=0;
+    v[i]=0;
+    F[i]=0;
+  }
+  r[0] = x0;
+  r[1] = y0;
 
   idx = v_balls.size();
   pid = 1;
@@ -97,28 +101,13 @@ Ball::Ball (double r, double t, int hex) {
 
   } else {
 
+    float x,y; //does this double init?
     x = r * cos(t);
     y = r * sin(t);
     Ball(x, y);
   }
 
 }
-
-double Ball::dist2ball(Ball &b) {
-
-  double x,y,z;
-  double dx,dy,dz;
-  
-  dx = b.x - x;
-  dy = b.y - y;
-  dz = b.z - z;
-
-  double L;
-  L = sqrt( dx*dx + dy*dy + dz*dz );
-
-  return L;
-}
-//b1->dist2ball(b2);
 
 
 Spring::Spring (int b1, int b2) {
@@ -132,46 +121,33 @@ Spring::Spring (int b1, int b2) {
   float f = 0.95;
   L = Length();
 
-  eql = f * L;
-  
+  eql = f * L;  
 }
 
+/* determines a spring's lengths from its two nodes */
 double Spring::Length(){
 
-  /* determines a spring's lengths from its two nodes */
-
-  double dx, dy, L;
+  double L = 0;
+  double dr[3];
   
   Ball a = v_balls[n1];
   Ball b = v_balls[n2];
 
-  dx = b.x - a.x;
-  dy = b.y - a.y;
+  for (int i=0; i<3; i++) {
+    dr[i] = b.r[i] - a.r[i];
 
-  L = sqrt( dx*dx + dy*dy );
+    L += dr[i]*dr[i];
+  }
+  L = sqrt(L);
 
   return L;
-}
-
-//unsued 
-double Spring::Energy(vector<Ball> &v) {
-
-  /* U = 1/2 k x*x */
-  double dx = v[n1].x - v[n2].x;
-  double dy = v[n1].y - v[n2].y;
-
-  double mag = sqrt(dx*dx + dy*dy);
-
-  double E = k/2 * (mag - eql) * (mag - eql);
-
-  return E;
 }
 
 
 void meshInit() {
 
   int N=2;
-  double L=1.2;  
+  double L=1;  
 
   double a = -L*(N - 1./2);
   double x0=a,y0=a;
@@ -291,16 +267,21 @@ void hexInit() {
 
 
 /* what is the cost of not passing by ref? */
-float distBall(Ball a, Ball b) {
+float distBall(Ball b1, Ball b2) {
 
-  float x,y,z;
-  x = b.x - a.x;
-  y = b.y - a.y;
-  z = b.z - a.z;
+  float L = 0;
+  float r1[3],r2[3],dr[3];
+  for (int i=0; i<3; i++) {
 
-  float L;
-  L = sqrt( x*x + y*y + z*z );
+    r1[i] = b1.r[i];
+    r2[i] = b2.r[i];
 
+    dr[i] = r2[i] - r1[i];
+
+    L += dr[i]*dr[i];
+  }
+  L = sqrt(L);
+  
   return L;
 }
 
@@ -308,10 +289,11 @@ vector<Spring> subInit(vector<Spring> vs) {
 
   //makes a copy
   int N = vs.size();
-  int n = 2; //new springs :: 1 should be identity
+  int n = 3; //new springs :: 1 should be identity
   Spring *spr;
   Ball *b1, *b2;
-  double dx, dy;
+  //  double dx, dy;
+  double r1[3],r2[3],dr[3];
   
   vector<Spring> newSpring_v;
   //for each spring
@@ -325,13 +307,16 @@ vector<Spring> subInit(vector<Spring> vs) {
     b1 = &v_balls.at(j1);
     b2 = &v_balls.at(j2);
 
-    dx = (b2->x - b1->x) / n;
-    dy = (b2->y - b1->y) / n;
+    for (int i=0; i<3; i++) {
+      r1[i] = b1->r[i];
+      r2[i] = b2->r[i];
+      dr[i] = (r2[i] - r1[i]) / n;
+    }
 
     //create N-1 new balls
     for (int i=1; i<n; i++) {
-      Ball b(b1->x + i*dx, 
-	     b1->y + i*dy);
+      Ball b(r1[0] + i*dr[0], 
+	     r2[1] + i*dr[1]);
       b.pid = 0;
       v_balls.push_back(b);
     }
@@ -349,35 +334,6 @@ vector<Spring> subInit(vector<Spring> vs) {
   }
 
   return newSpring_v;
-}
-
-
-
-// For deletion 
-void initString() {
-
-  /* Sets Initial Conditions
-     we start w 1D spring for 1D forces*/
-
-  Ball a1(0,0);
-  Ball b0(1,0);
-  Ball a2(3,0); 
-
-  v_balls.push_back(a1);
-  v_balls.push_back(b0);
-  v_balls.push_back(a2);
-
-  /* need to build springs */
-
-  Spring s1 = Spring(0,1);
-  Spring s2 = Spring(1,2);
-
-  s1.eql = (a2.x - a1.x) / 2;
-  s2.eql = (a2.x - a1.x) / 2;
-
-  v_springs.push_back(s1);
-  v_springs.push_back(s2);
-
 }
 
 
@@ -400,3 +356,149 @@ void show() {
   getc(stdin);
 }
 
+
+void initKaran() {
+
+  /* temp */
+  kx = fopen("karanX.txt", "w");
+  fprintf(kx, "%i\n" , nTime);
+  fprintf(kx, "%i\n\n" , nBalls);
+
+  ky = fopen("karanY.txt", "w");
+  fprintf(ky, "%i\n" , nTime);
+  fprintf(ky, "%i\n\n" , nBalls);
+}
+
+void fileInit() {
+
+  cout << " initializing file.." << endl;
+  f1 = fopen("balls.dat", "w");
+  f2 = fopen("springs.dat", "w");
+
+  nBalls = v_balls.size();
+  nSprings = v_springs.size();
+
+  nTime = (int) tmax/dt;
+  nTime = nTime/ts + 1;
+  cout << "predicted time steps: " << nTime << endl;
+
+  fprintf(f1, "%i\n" , nTime);
+  fprintf(f1, "%i\n\n" , nBalls);
+  fprintf(f2, "%i\n\n" , nSprings);
+
+  //msdInit()
+  if (_msd) f3 = fopen("outMSD.txt", "w");
+}
+
+void filesClose() {
+  fclose(f1);
+  fclose(f2);
+  fclose(f3);
+  fclose(kx);
+  fclose(ky);
+  cout << "files written." << endl;
+}
+
+void randInit() {
+
+  cout << " initializing rand.." << endl;
+  unsigned int saat = (unsigned int)time(0); 
+  randi.seed(saat);
+}
+
+/* writes Initial Positions and PID */
+void initBalls() {
+
+  int N = nBalls;
+  float r0[N][3];
+  for(int j=0; j<N; j++) { 
+
+    //write pid (1-anchor, 0-spectrin)
+    fprintf(f1, " %i", v_balls[j].pid);
+
+    //write initial positions
+    for(int i=0; i<3; i++) {
+      r0[j][i] = v_balls.at(j).r[i];
+    }
+    /* does't go anywhere yet! */
+
+  }
+  fprintf(f1, "\n\n");
+
+}
+
+
+
+
+void writeKaranXY(FILE* fx, FILE* fy) {
+
+  size_t N = v_balls.size();
+  float x=0;
+  float y=0;
+  for (int j=0; j<N; j++) {
+    x = v_balls[j].r[0];
+    fprintf(fx,"%f ",x);
+
+    y = v_balls[j].r[1];
+    fprintf(fy,"%f ",y);
+  }
+  fprintf(fx,"\n");
+  fprintf(fy,"\n");
+}
+
+
+/* new development: no spring, just brown*/
+float calcMSD(float **r0) {
+
+  size_t N = v_balls.size(); 
+
+  float rt[N][3];
+  float sum=0;  
+
+  for (size_t j=0; j<N; j++) {
+    /* Zeros Forces */
+    for (int i=0; i<3; i++) {
+      v_balls[j].F[i] = 0;
+    }
+
+    /* update physics (no springs) */
+    updateBrownianPosition(v_balls[j]); 
+
+    /* compute MSD */
+    for (int i=0; i<3; i++) {
+      rt[j][i] = v_balls.at(j).r[i];
+      sum += (rt[j][i] - r0[j][i])
+   	    *(rt[j][i] - r0[j][i]);
+    }
+  }
+
+  sum = sum/N; //norm
+  return sum;
+}
+
+float calcMSDx(float *x0) {
+
+  size_t N = v_balls.size(); 
+
+  float xt[N];
+  float sum=0;  
+
+  for (size_t j=0; j<N; j++) {
+    /* Zeros Forces */
+    for (int i=0; i<3; i++) {
+      v_balls[j].F[i] = 0;
+    }
+
+    /* update physics (no springs) */
+    updateBrownianPosition(v_balls[j]); 
+
+    /* compute MSD */
+    xt[j] = v_balls.at(j).r[0];
+    sum += (xt[j] - x0[j])
+          *(xt[j] - x0[j]);
+  }
+  //cout << sum << " / " << N;
+  sum = sum / N; //norm
+  //cout << " = " << sum << endl;
+  return sum;
+}

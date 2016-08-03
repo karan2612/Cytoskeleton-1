@@ -4,131 +4,104 @@ int main() {
 
   cout << "hello world!" << endl;
 
-  /* Begin Init */
-  cout << " initializing system.." << endl;
-  //hexInit();
-  meshInit();
+  init();
+  physics();
 
-  cout << v_springs.size() << endl;
-  v_springs = subInit(v_springs);
-  cout << v_springs.size() << endl;
+  filesClose();
+  return 0;
+}
+
+void init() {
+
+  /* Build Cytoskeleton System */
+  cout << " initializing system.." << endl;
+  meshInit();
+  //v_springs = subInit(v_springs);
   //show();  
 
-  cout << " initializing file.." << endl;
-  f1 = fopen("balls.dat", "w");
-  f2 = fopen("springs.dat", "w");
+  /* Set Files and Rand*/
+  fileInit();
+  randInit();
+  initKaran();
 
-  int B, S, tout; 
-  B = v_balls.size();
-  S = v_springs.size();
-  tout = (int) tmax/dt;
-  tout = tout/ts;
+}
 
-  fprintf(f1, "%i\n" , tout);
-  cout << "predicted time steps: " << tout << endl;
-  fprintf(f1, "%i\n\n" , B);
-  fprintf(f2, "%i\n\n" , S);
+void physics() {
 
-  cout << " initializing rand.." << endl;
-  unsigned int saat = (unsigned int)time(0); //ok?
-  randi.seed(saat);
+  /* for all balls (post init) */
+  initBalls();
 
-  // init msd 
-  int N = v_balls.size();
-  float x0[N];
-  for(int i=0; i<N; i++) {
-    x0[i] = v_balls.at(i).x;
-    //write ball col
-    fprintf(f1, " %i", v_balls[i].pid);
-  }
-  fprintf(f1, "\n\n");
-  if (_msd) f3 = fopen("outMSD.txt", "w");
-  /* End Init */
-  
+  /* Defined in Header:
+     tmax - (float) absolute stop time
+     dt - (float) time step physics
+     ts - (int) time step output
+   */
+
   cout << " beginning physics.." << endl;
+  int t=0, t_count=0;
+
   float T=0; 
-  int t=0; int t_count=0;
   while (T<tmax) {
 
-    physics();
+    timeStep();
     //getc(stdin);
 
-    if (t % ts == 0) {
+    if (t % ts == 0) 
+    {
       t_count++;
-      if (_msd) {
-	msd = calcMSD(x0);
+      if (_msd) 
+      {
+	msd = calcMSDx(x0);
 	fprintf(f3, "%f\n", msd);
-	continue;
+	//continue;
       }
 
       writeBalls(f1);
       writeSprings(f2);
+      //  writeKaranXY(kx,ky);
     }
 
-    T += dt;
     t++;
+    T += dt;
   }
+
   cout << "actual time steps: " << t_count << endl;
-
   cout << " finished physics.." << endl;
-  fclose(f1);
-  fclose(f2);
-
-  cout << "files written." << endl;
-  return 0;
-}
-
-/* new development: no spring, just brown*/
-float calcMSD(float *x0) {
-
-  size_t N = v_balls.size(); 
-
-  float xt[N];
-  float sum=0;  
-
-  for (size_t j=0; j<N; j++) {
-    /* Zeros Forces */
-    v_balls[j].Fx = 0;
-    v_balls[j].Fy = 0;
-
-    /* update physics (no springs) */
-    updateBrownianPosition(v_balls[j]); 
-
-    /* compute MSD */
-    xt[j] = v_balls.at(j).x;
-    sum += (xt[j] - x0[j]) * (xt[j] - x0[j]);
-  }
-  sum = sum/N; //norm
-  return sum;
-}
-
-void initMSD() {
-
 }
 
 
 /* Everything here should be called once per time step*/
-void physics() {
+void timeStep() {
 
-  size_t N = v_balls.size(); 
+  size_t N = nBalls;
 
   /* Zeros Forces */
   for (size_t j=0; j<N; j++) {
-    v_balls[j].Fx = 0;
-    v_balls[j].Fy = 0;
+    for(int i=0; i<3; i++) {
+      v_balls[j].F[i] = 0;
+    }
   }
 
   /* add springs */
-  ForceSprings();
+  //  ForceSprings();
+  BoundarySprings();
 
   /* loop particles */
+  int isSpectrin;
   for (size_t j=0; j<N; j++) {
-    updatePosition(v_balls[j]); 
-    //updateBrownianPosition(v_balls[j]); 
-  }
+    isSpectrin = v_balls[j].pid;
+    updateBrownianPosition(v_balls[j]); 
+    /*    if (isSpectrin) {
 
+    } else {
+      updatePosition(v_balls[j]); 
+      }*/
+  }
 }
 
+void BoundarySprings() {
+
+}
 
 /* loop all springs to compute force on all balls */
 void ForceSprings() {
@@ -138,7 +111,7 @@ void ForceSprings() {
 
   int j1,j2; //vector index for the balls
   double L, X, F;
-  double x1, x2, y1, y2;
+  double u[3], v[3], dr[3];
 
   size_t N = v_springs.size();
   for (size_t j=0; j<N; j++) {
@@ -149,67 +122,42 @@ void ForceSprings() {
     X = spr->eql;
     F = -k * (L - X);
 
-    if (0) {
-      cout << "Spring " << j << endl;
-      cout << "(L, X, F): "
-	   << L << ", "
-	   << X << ", "
-	   << F 
-	   << endl;
-    }
-
     j1 = spr->n1;
     j2 = spr->n2;
     b1 = &v_balls[j1];
     b2 = &v_balls[j2];
 
-    x1 = b1->x;
-    x2 = b2->x;
+    for(int i=0; i<3; i++) {
+      u[i] = b1->r[i];
+      v[i] = b2->r[i];
 
-    b1->Fx += F * (x1-x2) / L; 
-    b2->Fx -= F * (x1-x2) / L;
-
-    y1 = b1->y;
-    y2 = b2->y;
-
-    b1->Fy += F * (y1-y2) / L; 
-    b2->Fy -= F * (y1-y2) / L;
+      dr[i] = u[i]-v[i];
+      b1->F[i] += F * dr[i] / L;
+      b2->F[i] -= F * dr[i] / L;
+    }
 
   }
-
 }
 
 void updateBrownianPosition(Ball &b) {
 
   double D = 0.1;
 
-  //update x: see wiki
-  b.x += (b.Fx/m)*dt + sqrt(2*D*dt)*randi.randNorm(0,1); 
-  b.y += (b.Fy/m)*dt + sqrt(2*D*dt)*randi.randNorm(0,1); 
+  for (int i=0; i<2; i++) {
+    b.r[i] += b.F[i]/m * dt;
+    b.r[i] += sqrt(2*D*dt)*randi.randNorm(0,1); 
+  }
 
 }
+
 void updatePosition(Ball &b) {
 
-  //compute a
-  double ax = b.Fx / m;
-  double ay = b.Fy / m;
-  
-  //update v
-  b.vx += ax * dt;
-  b.vy += ay * dt;
+  double a[3];
+  for (int i=0; i<3; i++) {
+    a[i] = b.F[i]/m;
 
-  //update x
-  b.x += b.vx * dt;
-  b.y += b.vy * dt;
-
-  if (0) {
-    cout << b.x << ", "
-	 << b.vx << ", "
-	 << ax << endl;
-
-    cout << b.y << ", "
-	 << b.vy << ", "
-	 << ay << endl;
+    b.v[i] += a[i] * dt;
+    b.r[i] += b.v[i] * dt;
   }
 }
 
@@ -218,9 +166,9 @@ void writeBalls(FILE* f) {
 
   int n = v_balls.size();
   for(int j=0; j<n; j++) {
-    fprintf(f, "%f ", v_balls[j].x);   
-    fprintf(f, " %f", v_balls[j].y);
-    fprintf(f, " %f", v_balls[j].z);
+    for(int i=0; i<3; i++) {
+      fprintf(f, "%f ", v_balls[j].r[i]);   
+    }
     fprintf(f, "\n");
   }
 
@@ -233,9 +181,11 @@ void writeSprings(FILE* f) {
   Spring *spr;
   Ball *b1, *b2;
   int n = v_springs.size();
-  float dx,dy,dz;
+
   float L;
+  float dx,dy,dz;
   float nx,ny,nz;
+  float r1[3],r2[3],dr[3],nr[3];
 
   /* fetch information about position, direction, L */
   for(int j=0; j<n; j++) {
@@ -244,26 +194,28 @@ void writeSprings(FILE* f) {
     b1 = &v_balls.at(spr->n1);
     b2 = &v_balls.at(spr->n2);
 
-    dx = b2->x - b1->x;
-    dy = b2->y - b1->y;
-    dz = b2->z - b1->z;
+    L = 0;
+    for (int i=0; i<3; i++) {
+      
+      r1[i] = b1->r[i];
+      r2[i] = b2->r[i];
+      dr[i] = r2[i] - r1[i];
+      
+      L += dr[i]*dr[i];
+    }
+    L = sqrt(L);
 
-    L = sqrt( dx*dx + dy*dy + dz*dz );    
-
-    nx = dx/L;
-    ny = dy/L;
-    nz = dz/L;
+    for (int i=0; i<3; i++) {
+      fprintf(f, "%f " , r1[i]);
+    }
     
-    fprintf(f, "%f" , b1->x);
-    fprintf(f, " %f", b1->y);
-    fprintf(f, " %f", b1->z);
-
-    fprintf(f, " %f", dx);
-    fprintf(f, " %f", dy);
-    fprintf(f, " %f", dz);
+    for (int i=0; i<3; i++) {
+      nr[i] = dr[i]/L; //necessary?
+      fprintf(f, "%f ", nr[i]);
+    }
 
     fprintf(f, " %f\n", L);
   }
-  fprintf(f, "\n");
 
+  fprintf(f, "\n");
 }
