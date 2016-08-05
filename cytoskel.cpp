@@ -16,8 +16,10 @@ void init() {
   /* Build Cytoskeleton System */
   cout << " initializing system.." << endl;
   meshInit();
-  //v_springs = subInit(v_springs);
-  //show();  
+
+  cout << v_balls.size() << " "<< v_springs.size() << endl;
+  v_springs = subInit(v_springs);
+  cout << v_balls.size() << " "<< v_springs.size() << endl;
 
   /* Set Files and Rand*/
   fileInit();
@@ -44,14 +46,13 @@ void physics() {
   while (T<tmax) {
 
     timeStep();
-    //getc(stdin);
 
     if (t % ts == 0) 
     {
       t_count++;
       if (_msd) 
       {
-	msd = calcMSDx(x0);
+	//msd = calcMSDx(x0);
 	fprintf(f3, "%f\n", msd);
 	//continue;
       }
@@ -83,24 +84,31 @@ void timeStep() {
   }
 
   /* add springs */
-  //  ForceSprings();
+  ForceSprings();
   BoundarySprings();
 
   /* loop particles */
   int isSpectrin;
   for (size_t j=0; j<N; j++) {
+
+    //    if (v_balls[j].isCorner) continue; 
+    if (v_balls[j].isEdge) continue; 
+
+    //updatePosition(v_balls[j]); 
     isSpectrin = v_balls[j].pid;
     updateBrownianPosition(v_balls[j]); 
-    /*    if (isSpectrin) {
-
-    } else {
-      updatePosition(v_balls[j]); 
-      }*/
   }
 }
 
 void BoundarySprings() {
 
+  //identify boundary balls
+
+  //for each find boundary partners
+
+  //calc periodic distance
+
+  //compute force
 }
 
 /* loop all springs to compute force on all balls */
@@ -141,9 +149,9 @@ void ForceSprings() {
 
 void updateBrownianPosition(Ball &b) {
 
-  double D = 0.1;
+  double D = 0.01;
 
-  for (int i=0; i<2; i++) {
+  for (int i=0; i<3; i++) {
     b.r[i] += b.F[i]/m * dt;
     b.r[i] += sqrt(2*D*dt)*randi.randNorm(0,1); 
   }
@@ -219,3 +227,6 @@ void writeSprings(FILE* f) {
 
   fprintf(f, "\n");
 }
+
+
+

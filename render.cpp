@@ -1,6 +1,7 @@
 #include "gr.h"
 #include "gr3.h"
 
+
 #include "stdio.h"
 
 #include <iostream>
@@ -16,11 +17,20 @@ int main() {
 
   /* Read in Balls */
   ifstream dataBalls("balls.dat", ios::in);
+
   int T,N,X;
   dataBalls >> T;
   dataBalls >> N;
+
   X = 3*N;
+  cout << T << " " << X << " " << N << endl;
   float in[T][X];
+  //float *in = new float[T][X];
+  /*
+    new allocates to the heap, while float[][] does stack, which got overflown
+    make an vector<vector> bc you don't need one large chunk of memory
+  */
+  //  float in[3000][1000];
   float colors[X];  
   float radii[N];
   float *positions;
@@ -31,28 +41,39 @@ int main() {
 
     dataBalls >> pid;
     /* Particle ID
+       0: middle, white
        1: anchor, red
-       2: middle, white
+       2: edge, blue
     */
-    if (pid) {
-      colors[3*i + 0] = 1;
-      colors[3*i + 1] = 0;
-      colors[3*i + 2] = 0;
-      radii[i] = 0.25;
-    } else {
+    if (pid == 0) {
       colors[3*i + 0] = 1;
       colors[3*i + 1] = 1;
       colors[3*i + 2] = 1;
-      radii[i] = 0.15;
+      radii[i] = 0.12;
+
+    } else if (pid == 2)  
+    {
+      colors[3*i + 0] = 0.3;
+      colors[3*i + 1] = 0;
+      colors[3*i + 2] = 1;
+      radii[i] = 0.22;
+    } else {
+      colors[3*i + 0] = 1;
+      colors[3*i + 1] = 0;
+      colors[3*i + 2] = 0;
+      radii[i] = 0.22;
     }
 
   }
 
+  cout << "beep2" << endl;
   // pos
   for(int t=0; t<T; t++) {
     for(int x=0; x<X; x++) {
-      dataBalls >> num;
-      in[t][x] = num;
+      dataBalls >> in[t][x];
+
+      //dataBalls >> num;
+      //in[t][x] = num;
     }
   }
   cout << " finished reading balls" << endl;
@@ -71,6 +92,7 @@ int main() {
     }
   }
 
+  cout << "beep4" << endl;
   float inX[T][V], inD[T][V], inL[T][S];
   for(int t=0; t<T; t++) {
     for(int s=0; s<S; s++) {
@@ -87,6 +109,9 @@ int main() {
     }
   } //maybe there is a more elegant way to do this, or is this very elegant?
 
+  cout << "beep5" << endl;
+  std::cerr << endl;
+  //  fprintf(stderr,"angle %f\n",angle); //for flash no-buffer print; for C
   float *cyl_pos;
   float *cyl_dir;
   float *cyl_len;
@@ -98,7 +123,7 @@ int main() {
     cyl_col[3*j + 1] = 1;
     cyl_col[3*j + 2] = 1;
 
-    cyl_rad[j] = 0.1;
+    cyl_rad[j] = 0.08;
   }
   cout << " finished reading springs" << endl;
 
@@ -117,14 +142,17 @@ int main() {
     gr3_drawcylindermesh(S, cyl_pos, cyl_dir, cyl_col, cyl_rad, cyl_len);
 
     gr_clearws();
-    gr_setviewport(0, 1, 0, 1);
-    gr3_drawimage(0, 1, 0, 1, 500, 500, GR3_DRAWABLE_GKS);
+    gr_setwsviewport(0, 0.12, 0, 0.12); // in units m
+    gr_setviewport(0, 1, 0, 1);       // relative to Work Station
+    //gr_inqdspsize();//
+    gr3_drawimage(0, 1, 0, 1, 800, 800, GR3_DRAWABLE_GKS);
     gr_updatews();    
 
-    //cout << t << endl;
   }
-  cout << "rendering complete! press any key <> to contiune" << endl;
+  //  gr_emergencyclosegks(); //
 
+  cout << "rendering complete! press any key <> to contiune" << endl;
   getc(stdin);
+
   return 0;
 }

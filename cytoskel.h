@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <math.h>
+//#include <math.h>
+#include <cmath>
 #include "MersenneTwister.h"
 
 #define PI 3.14159265
@@ -19,6 +20,8 @@ public:
 
   double T,U;
   int pid, idx;
+  bool isCorner;
+  bool isEdge;
 };
 
 class Spring {
@@ -35,15 +38,19 @@ public:
 };
 
 
-/* General Declaration */
+/* Global Declaration */
 MTRand randi;
 
 bool _msd = false;
 int nBalls, nSprings, nTime; 
 
-float tmax = 100; //time absolute stop
+float tmax = 5; //time absolute stop
 float dt = 0.005; //time step physics
 int ts = 8;      //time step rendering
+
+int _nSYS = 4;
+float _LENGTH = 0.9;
+float _nSpectrin = 4;
 
 float msd = 0;
 double k = 2; 
@@ -73,7 +80,9 @@ void updateBrownianPosition(Ball &b);
 float calcMSD(float**);
 float calcMSDx(float*);
 
-float distBall(Ball, Ball);
+float distBall(Ball*, Ball*);
+bool isCorner(int, int, int);
+bool isEdge(int, int, int);
 
 void writeBalls(FILE*);
 void writeSprings(FILE*);
@@ -92,6 +101,8 @@ Ball::Ball (double x0, double y0) {
 
   idx = v_balls.size();
   pid = 1;
+  isCorner = false;
+  isEdge = false;
 }
 
 Ball::Ball (double r, double t, int hex) {
@@ -118,7 +129,7 @@ Spring::Spring (int b1, int b2) {
 
   /* sets equilibrium length 
      as some fraction f of initial length */
-  float f = 0.95;
+  float f = 0.98;
   L = Length();
 
   eql = f * L;  
@@ -146,8 +157,8 @@ double Spring::Length(){
 
 void meshInit() {
 
-  int N=2;
-  double L=1;  
+  int N=_nSYS;
+  double L = _LENGTH;
 
   double a = -L*(N - 1./2);
   double x0=a,y0=a;
@@ -155,21 +166,21 @@ void meshInit() {
   double h = sqrt(3)*L/2;
 
   /* Build Balls */
+  Ball *b;
   for (int y=0; y<2*N; y++) {
+    for (int x=0; x<2*N; x++) {
 
-    if (y%2 == 0) {
-      //even
-      for (int x=0; x<2*N; x++) {
-	Ball b(x0 + x*L, y0 + y*h); 
-	v_balls.push_back(b);
-      }
+      if (y%2 == 0) //even
+	{ b = new Ball(x0 + x*L, y0 + y*h); }    
+      else //odd
+	{ b = new Ball(x0+L/2 + x*L, y0 + y*h); }
 
-    } else {
-      //odd
-      for (int x=0; x<2*N; x++) {
-	Ball b(x0+L/2 + x*L, y0 + y*h);
-	v_balls.push_back(b);
-      }
+      if (isCorner(x,y,N)) 
+	{b->isCorner = true; }
+      if (isEdge(x,y,N)) 
+	{b->isEdge = true; b->pid=2;}
+
+      v_balls.push_back(*b);
     }
   }
 
@@ -267,14 +278,14 @@ void hexInit() {
 
 
 /* what is the cost of not passing by ref? */
-float distBall(Ball b1, Ball b2) {
+float distBall(Ball *b1, Ball *b2) {
 
   float L = 0;
   float r1[3],r2[3],dr[3];
   for (int i=0; i<3; i++) {
 
-    r1[i] = b1.r[i];
-    r2[i] = b2.r[i];
+    r1[i] = b1->r[i];
+    r2[i] = b2->r[i];
 
     dr[i] = r2[i] - r1[i];
 
@@ -289,12 +300,13 @@ vector<Spring> subInit(vector<Spring> vs) {
 
   //makes a copy
   int N = vs.size();
-  int n = 3; //new springs :: 1 should be identity
+  int n = _nSpectrin; //new springs :: 1 should be identity
   Spring *spr;
   Ball *b1, *b2;
   //  double dx, dy;
   double r1[3],r2[3],dr[3];
-  
+  double x,y;
+
   vector<Spring> newSpring_v;
   //for each spring
   for (int j=0; j<N; j++) {
@@ -315,8 +327,9 @@ vector<Spring> subInit(vector<Spring> vs) {
 
     //create N-1 new balls
     for (int i=1; i<n; i++) {
-      Ball b(r1[0] + i*dr[0], 
-	     r2[1] + i*dr[1]);
+      x = r1[0] + i*dr[0];
+      y = r1[1] + i*dr[1];
+      Ball b(x,y);
       b.pid = 0;
       v_balls.push_back(b);
     }
@@ -334,26 +347,6 @@ vector<Spring> subInit(vector<Spring> vs) {
   }
 
   return newSpring_v;
-}
-
-
-/* for misc purposes */
-void show() {
-  cout << "showing..." << endl;
-
-  int n = v_balls.size();
-  cout << "Total Balls: " << n << endl;
-  cout << "(i, idx, pid)" << endl;
-
-  Ball* foo;
-  for (int i=0; i<n; i++) {
-    foo = &v_balls.at(i);
-
-    cout << i << " "
-	 << foo->idx << " "
-	 << foo->pid << endl;
-  }
-  getc(stdin);
 }
 
 
@@ -428,8 +421,6 @@ void initBalls() {
 }
 
 
-
-
 void writeKaranXY(FILE* fx, FILE* fy) {
 
   size_t N = v_balls.size();
@@ -502,3 +493,93 @@ float calcMSDx(float *x0) {
   //cout << " = " << sum << endl;
   return sum;
 }
+
+/*Vestigial, this will be axed soon
+  but I think the Algorithm may be reincarnated in L-J Force
+*/
+void findEdges() {
+
+  Ball *b1, *b2;
+  float L = 0;
+  //  float a = _LENGTH/_nSpectrin;
+  float a = 1.01;
+  cout << a << endl;
+  
+  int count = 0;
+  int N = v_balls.size();
+  for (int i=0; i<N; i++) {
+    for (int j=0; j<N; j++) {
+
+      if (i==j) continue;
+      b1 = &v_balls[i];
+      b2 = &v_balls[j];
+      
+      L = distBall(b1, b2);
+
+      L = abs(L - a*_nSpectrin);
+      if (L < 0.2) {
+	count++;
+
+	if (0) {
+	cout << i << " "
+	     << j << " "
+	     << L << endl;}
+
+      }
+    }
+  }
+  cout << "\n" << count << endl;
+  getc(stdin);
+}
+
+bool isCorner(int i, int j, int N) {
+
+  //returns true if corner
+  bool foo = false;
+  int beg = 0;
+  int end = 2*N-1;
+
+  if (i==end && j==beg) foo = true;
+  if (i==beg && j==end) foo = true;
+
+  if (i==beg && j==beg) foo = true;
+  if (i==end && j==end) foo = true;
+
+  return foo;
+}
+
+bool isEdge(int i, int j, int N) {
+
+  //returns true if corner
+  bool foo = false;
+  int beg = 0;
+  int end = 2*N-1;
+
+  if (i==end || j==beg) foo = true;
+  if (i==beg || j==end) foo = true;
+
+  if (i==beg || j==beg) foo = true;
+  if (i==end || j==end) foo = true;
+
+  return foo;
+}
+
+/* for misc purposes */
+void show() {
+  cout << "showing..." << endl;
+
+  int n = v_balls.size();
+  cout << "Total Balls: " << n << endl;
+  cout << "(i, idx, pid)" << endl;
+
+  Ball* foo;
+  for (int i=0; i<n; i++) {
+    foo = &v_balls.at(i);
+
+    cout << i << " "
+	 << foo->idx << " "
+	 << foo->pid << endl;
+  }
+  getc(stdin);
+}
+
