@@ -10,12 +10,15 @@
 
 using namespace std;
 
+bool _mov = false;
+
 int main() {
 
   cout << "begin rendering.." << endl;
   double num;
 
   /* Read in Balls */
+
   ifstream dataBalls("balls.dat", ios::in);
 
   int T,N,X;
@@ -30,7 +33,6 @@ int main() {
     new allocates to the heap, while float[][] does stack, which got overflown
     make an vector<vector> bc you don't need one large chunk of memory
   */
-  //  float in[3000][1000];
   float colors[X];  
   float radii[N];
   float *positions;
@@ -66,14 +68,12 @@ int main() {
 
   }
 
-  cout << "beep2" << endl;
-  // pos
+
+  // position
   for(int t=0; t<T; t++) {
     for(int x=0; x<X; x++) {
-      dataBalls >> in[t][x];
 
-      //dataBalls >> num;
-      //in[t][x] = num;
+      dataBalls >> in[t][x];
     }
   }
   cout << " finished reading balls" << endl;
@@ -129,8 +129,8 @@ int main() {
 
   /* Animate Video */
   cout << "Begin looping.. " << endl;
-  //  setenv("GKS_WSTYPE", "mov", 1); //
-  for(int t=0; t<T; t++) {
+  if(_mov) setenv("GKS_WSTYPE", "mov", 1); 
+  for(int t=0; t<T-1; t++) {
 
     positions = in[t];
     cyl_pos = inX[t];
@@ -149,7 +149,7 @@ int main() {
     gr_updatews();    
 
   }
-  //  gr_emergencyclosegks(); //
+  if (_mov) gr_emergencyclosegks();
 
   cout << "rendering complete! press any key <> to contiune" << endl;
   getc(stdin);
