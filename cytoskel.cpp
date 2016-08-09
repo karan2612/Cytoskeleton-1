@@ -1,5 +1,4 @@
 #include "cytoskel.h"
-
 int main() {
 
   cout << "hello world!" << endl;
@@ -18,10 +17,8 @@ void init() {
   /* Build Cytoskeleton System */
   cout << " initializing system.." << endl;
   meshInit();
-
-  cout << v_balls.size() << " "<< v_springs.size() << endl;
-  v_springs = subInit(v_springs);
-  cout << v_balls.size() << " "<< v_springs.size() << endl;
+  spectrinInit();
+  initParticle();
 
   /* Set Files and Rand*/
   fileInit();
@@ -43,23 +40,16 @@ void physics() {
 
     timeStep();
 
-    if (t % ts == 0) 
-    { t_count++;
-      
-      /* make measurements */
-      writeBalls(f1);
-      writeSprings(f2);
-      measureEdge(f3);
-
-      //  if (_msd) fprintf(f3, "%f\n", msd);
-      //  writeKaranXY(kx,ky);
+    if (t % ts == 0) { 
+      t_count++;
+      doAnalysis();
     }
 
     t++;
     T += dt;
   }
 
-  cout << "actual time steps: " << t_count << endl;
+  cout << "   actual time steps: " << t_count << endl;
   cout << " finished physics.." << endl;
 }
 
@@ -91,6 +81,19 @@ void timeStep() {
 
 }
 
+void doAnalysis() {
+ 
+  /* make measurements */
+  measureEdge(f3);
+  measureEnergy();
+  measureContour();
+  //  if (_msd) fprintf(f3, "%f\n", msd);
+  //  writeKaranXY(kx,ky);
+
+  /* for rendering */
+  writeBalls(f1);
+  writeSprings(f2);
+}
 
 /* loop all springs to compute force on all balls */
 void ForceSprings() {

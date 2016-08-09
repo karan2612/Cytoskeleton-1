@@ -50,9 +50,10 @@ float tmax = 30; //time absolute stop
 float dt = 0.005; //time step physics
 int ts = 30;      //time step rendering
 
-int _nSYS = 3;
-float _LENGTH = 0.9;
-float _nSpectrin = 3;
+int _nSYS = 3;  //side length is Twice this #
+int _nSpectrin = 6; //number of spectrin Springs between each actin
+double _lActin = 0.9; //initial length between Actin
+double _Contour = 2.5 * _lActin;
 
 float msd = 0;
 double _k = 1; 
@@ -67,6 +68,7 @@ vector<Spring> v_springs;
 void init();
 void hexInit();
 void meshInit();
+void spectrinInit();
 vector<Spring> subInit(vector<Spring> vs);
 void initPID();
 void filesInit();
@@ -75,26 +77,28 @@ void initKaran();
 
 void physics();
 void timeStep();
+void doAnalysis();
 void ForceSprings();
 void updatePosition(Ball &);
 void updateBrownianPosition(Ball &);
+
+void SurfaceForce();
+double LJforce(double);
+double zSurface(double, double);
 
 float calcMSD(float**);
 float calcMSDx(float*);
 
 float distBall(Ball*, Ball*);
+vector<float> normBall(Ball*, Ball*);
 bool isEdge(int, int, int);
 int edgeType(int, int, int);
-
-double zSurface(double, double);
-double LJforce(double);
-void LJsurface(Ball*);
-void SurfaceForce();
 
 void writeBalls(FILE*);
 void writeSprings(FILE*);
 void measureEdge(FILE*);
-
+void measureEnergy();
+void measureContour();
 void writeKaranXY(FILE*,FILE*);
 
 /* function def */
@@ -199,7 +203,7 @@ double Spring::getEnergy() {
 void meshInit() {
 
   int N=_nSYS;
-  double L = _LENGTH;
+  double L = _lActin;
 
   double a = -L*(N - 1./2);
   double x0=a,y0=a;
@@ -262,7 +266,9 @@ void meshInit() {
     }
   }
 
+  cout << "   mesh complete" << endl;
 }
+
 void hexInit() {
 
   int i = 1;
@@ -327,8 +333,6 @@ void toyInit() {
 
 }
 
-
-/* what is the cost of not passing by ref? */
 float distBall(Ball *b1, Ball *b2) {
 
   float L = 0;
@@ -345,6 +349,33 @@ float distBall(Ball *b1, Ball *b2) {
   L = sqrt(L);
   
   return L;
+}
+
+//returns norm from origin of a to origin of b
+vector<float> normBall(Ball *a, Ball *b) {
+
+  float u[3],v[3],n[3];
+  for (int i=0;i<3;i++) {
+    u[i] = a->r[i];
+    v[i] = b->r[i];
+
+    n[i] = v[i] - u[i];
+  }
+
+  float m=0; //magnitutde
+  for(int j=0; j<3; j++) {
+    m += n[j]*n[j];
+  }
+  m = sqrt(m);
+  /* I could make a subroutine,
+     but that would pass an array and return a double */
+
+  vector<float> norm = vector<float>(3);
+  for(int j=0; j<3; j++) {
+    norm[j] = n[j]/m;
+  }
+
+  return norm;
 }
 
 vector<Spring> subInit(vector<Spring> vs) {
@@ -401,6 +432,73 @@ vector<Spring> subInit(vector<Spring> vs) {
   return newSpring_v;
 }
 
+void spectrinInit() {
+
+  //makes a copy
+  //vector<Spring> vs = v_springs;
+  int N = v_springs.size();
+  int n = _nSpectrin; //new springs :: 1 should be identity
+
+  Spring *spr;
+  Ball *b1, *b2;
+
+  double r1[2],r2[2],dr[2]; //lives in 2D plane
+  double x,y,z;
+
+  double A = _lActin;
+  double C = _Contour;
+  double h = sqrt(C*C + A*A) / 2; //creates dagger strings
+
+  vector<Spring> newSpring_v;
+  //for each spring
+  int j1,j2;
+  for (int j=0; j<N; j++) {
+    spr = &v_springs.at(j);
+
+    j1 = spr->n1; 
+    j2 = spr->n2; 
+
+    b1 = &v_balls.at(j1);
+    b2 = &v_balls.at(j2);
+
+    for (int i=0; i<2; i++) {
+      r1[i] = b1->r[i];
+      r2[i] = b2->r[i];
+      dr[i] = (r2[i] - r1[i]) / n;
+    }
+
+    //create n-1 new balls
+    int k = v_balls.size(); //used later
+    double a = A/2;
+    for (int i=1; i<n; i++) {
+      x = r1[0] + i*dr[0];
+      y = r1[1] + i*dr[1];
+      z = -h + h/a * abs( a - (i*A/n) );
+
+      Ball b(x,y,z);
+      b.pid = 0;
+      v_balls.push_back(b);
+    }
+
+    //connect w N new springs (+2 old balls)
+    if (n == 1) return;
+    newSpring_v.push_back( Spring(j1,k) ); 
+    for (int i=1; i<n-1; i++) 
+    {
+      newSpring_v.push_back( Spring(k, k+1) );
+      k++;
+    }
+    newSpring_v.push_back( Spring(k, j2) );
+
+  }
+
+  //haben Sie memory leak??
+  v_springs = newSpring_v;
+
+  cout << "   spectrin spring complete " 
+       << n << endl;
+}
+
 
 void initKaran() {
 
@@ -427,7 +525,7 @@ void fileInit() {
 
   nTime = (int) tmax/dt;
   nTime = nTime/ts + 1;
-  cout << "predicted time steps: " << nTime << endl;
+  cout << "   predicted time steps: " << nTime << endl;
 
   fprintf(f1, "%i\n" , nTime);
   fprintf(f1, "%i\n\n" , nBalls);
@@ -464,7 +562,6 @@ void initPID() {
 
     //write pid (1-anchor, 0-spectrin)
     fprintf(f1, " %i", v_balls[j].pid);
-     //cout << v_balls[j].pid << endl;
   }
   fprintf(f1, "\n\n");
 
@@ -551,7 +648,7 @@ void findEdges() {
 
   Ball *b1, *b2;
   float L = 0;
-  //  float a = _LENGTH/_nSpectrin;
+  //  float a = _lActin/_nSpectrin;
   float a = 1.01;
   cout << a << endl;
   
@@ -630,21 +727,23 @@ double pow(double x, int n) {
 
 double LJforce(double r) {
 
-  if (r > 0.3) return 0;
+  double F, e, m, p;
+  e = 0.2; //I choose to absorb 12 into e
+  //m = 0.45; 
+  m = 0.1; 
+  // m = sigma(p);
+
+  if (r > m) return 0;
   if (r < 0.05) {
     cout << "Warning: LJ Singularity from small r" << endl;
   }
 
   /* F = 12 e/r [p12 - p6]  
       where p = r_min/r */
-
-  double F, e, m, p;
-  e = 0.2; //I choose to absorb 12 into e
-  m = 0.1; //is this enough buffer?
   p = m/r;
   p = pow(p,6);
-  //  F =  - e /r * p * (p - 1);
-  F =  - e /r * p * p;
+  F =  - e /r * p * (p - 1);
+  //F =  - e /r * p * p;
 
   return F;
 }
@@ -660,21 +759,47 @@ double zSurface(double x, double y) {
 Ball* Particle = 0;
 void initParticle() {
 
-  Ball p = Ball(0,0,5);
-  //need to add radius!
-  Particle = &p;
+  double z = 2;
+  Particle = new Ball(0,0,z);  //need to add radius!
+
 }
 // also need shorter name
 
 void ParticleInteraction() {
-  cout << " considering Particle interactions.." << endl;
-  //  if (!Particle) {
-  if (0) {
+  //cout << " considering Particle interactions.." << endl;
+
+  if (!Particle) {
     cout << "particle not initialized!" << endl;
     getc(stdin);
   }
+ 
+  double radius = 2.15; //hard code for now
+  double r;
+  vector<float> nm;
+  double F;
 
-  //count spectrin just outside radius R
+  int N = nBalls;
+  int count = 0;
+  Ball *b;
+  for (int j=0; j<N; j++) {
+    
+    b = & v_balls.at(j);
+    r = distBall(b, Particle);
+
+    if ( r < radius ) {
+      nm = normBall(b,Particle);
+      F = -5;
+      // F = LJForce(r);
+      for (int i=0; i<2; i++) {
+	b->F[i] += F * nm[i];
+      }
+
+      count++;
+    }
+  }   
+
+  //  cout << count << endl;
+
   //how can I be sure that none are INSIDE the Particle?
 
 }
@@ -697,22 +822,65 @@ void measureEdge(FILE* f) {
   //  cout << endl;
   fprintf(f, "\n");
 }
+
+void measureEnergy() {
+
+  int N = nSprings;
+
+  Spring *s;
+  float E = 0;
+  for (int j=0; j<N; j++) {
+
+    s = &v_springs[j];
+    E += s->getEnergy();
+  }
+
+  //should I normalize this?
+  //  cout << E << endl;
+}
+
+void measureContour() {
+
+  /* the springs are created N at a time
+     so I can exploit this in reading the segments */
+
+  int N = nSprings;
+  int n = _nSpectrin;
+
+  Spring *s;
+  float C=0; //contour
+  for(int j=0; j<N; j++) {
+
+    s = &v_springs.at(j);
+    C += s->getLength();
+
+    if (j == 0) continue;
+    if (j%n == 0) {
+      cout << C << endl;
+      C = 0;
+    }
+  }
+  cout << endl;
+}
+
 /* for misc purposes */
 void show() {
   cout << "showing..." << endl;
 
   int n = v_balls.size();
-  cout << "Total Balls: " << n << endl;
-  cout << "(i, idx, pid)" << endl;
 
-  Ball* foo;
+  Ball* b;
   for (int i=0; i<n; i++) {
-    foo = &v_balls.at(i);
+    b = &v_balls.at(i);
 
-    cout << i << " "
-	 << foo->idx << " "
-	 << foo->pid << endl;
+    float m; //magnitutde
+    for(int j=0; j<3; j++) {
+      m += b->F[i] * b->F[i];
+    }
+    m = sqrt(m);    
+    cout << m << endl;
   }
-  getc(stdin);
+
+  //  getc(stdin);
 }
 
