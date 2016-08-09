@@ -51,23 +51,25 @@ int main() {
       colors[3*i + 0] = 1;
       colors[3*i + 1] = 1;
       colors[3*i + 2] = 1;
-      radii[i] = 0.12;
+      radii[i] = 0.1;
 
     } else if (pid == 2)  
     {
       colors[3*i + 0] = 0.3;
       colors[3*i + 1] = 0;
       colors[3*i + 2] = 1;
-      radii[i] = 0.22;
+      radii[i] = 0.2;
     } else {
       colors[3*i + 0] = 1;
       colors[3*i + 1] = 0;
       colors[3*i + 2] = 0;
-      radii[i] = 0.22;
+      radii[i] = 0.2;
     }
 
   }
-
+  colors[0] = 1;
+  colors[1] = 1;
+  colors[2] = 0;
 
   // position
   for(int t=0; t<T; t++) {
@@ -92,7 +94,6 @@ int main() {
     }
   }
 
-  cout << "beep4" << endl;
   float inX[T][V], inD[T][V], inL[T][S];
   for(int t=0; t<T; t++) {
     for(int s=0; s<S; s++) {
@@ -109,9 +110,6 @@ int main() {
     }
   } //maybe there is a more elegant way to do this, or is this very elegant?
 
-  cout << "beep5" << endl;
-  std::cerr << endl;
-  //  fprintf(stderr,"angle %f\n",angle); //for flash no-buffer print; for C
   float *cyl_pos;
   float *cyl_dir;
   float *cyl_len;
@@ -123,14 +121,16 @@ int main() {
     cyl_col[3*j + 1] = 1;
     cyl_col[3*j + 2] = 1;
 
-    cyl_rad[j] = 0.08;
+    cyl_rad[j] = 0.05;
   }
   cout << " finished reading springs" << endl;
 
   /* Animate Video */
   cout << "Begin looping.. " << endl;
   if(_mov) setenv("GKS_WSTYPE", "mov", 1); 
-  for(int t=0; t<T-1; t++) {
+  int tend = T-1;
+  //  tend = 150;
+  for(int t=0; t<tend; t++) {
 
     positions = in[t];
     cyl_pos = inX[t];
@@ -148,7 +148,9 @@ int main() {
     gr3_drawimage(0, 1, 0, 1, 800, 800, GR3_DRAWABLE_GKS);
     gr_updatews();    
 
+    cerr << t << "\r";
   }
+  cout << "finished loop" << endl;
   if (_mov) gr_emergencyclosegks();
 
   cout << "rendering complete! press any key <> to contiune" << endl;
