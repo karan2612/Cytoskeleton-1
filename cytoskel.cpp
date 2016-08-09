@@ -5,6 +5,8 @@ int main() {
   cout << "hello world!" << endl;
 
   init();
+  //  toyInit();
+
   physics();
 
   filesClose();
@@ -24,20 +26,14 @@ void init() {
   /* Set Files and Rand*/
   fileInit();
   randInit();
-  initKaran();
-
 }
 
 void physics() {
 
-  /* for all balls (post init) */
-  initBalls();
-
   /* Defined in Header:
      tmax - (float) absolute stop time
      dt - (float) time step physics
-     ts - (int) time step output
-   */
+     ts - (int) time step output */
 
   cout << " beginning physics.." << endl;
   int t=0, t_count=0;
@@ -48,17 +44,14 @@ void physics() {
     timeStep();
 
     if (t % ts == 0) 
-    {
-      t_count++;
-      if (_msd) 
-      {
-	//msd = calcMSDx(x0);
-	fprintf(f3, "%f\n", msd);
-	//continue;
-      }
-
+    { t_count++;
+      
+      /* make measurements */
       writeBalls(f1);
       writeSprings(f2);
+      measureEdge(f3);
+
+      //  if (_msd) fprintf(f3, "%f\n", msd);
       //  writeKaranXY(kx,ky);
     }
 
@@ -83,33 +76,21 @@ void timeStep() {
     }
   }
 
-  /* add springs */
+  /* Tally Forces */
   ForceSprings();
-  BoundarySprings();
+  SurfaceForce();
+  //ParticleInteraction();
 
-  /* loop particles */
-  int isSpectrin;
+  /* Update Particles */
   for (size_t j=0; j<N; j++) {
 
-    //    if (v_balls[j].isCorner) continue; 
     if (v_balls[j].isEdge) continue; 
-
     //updatePosition(v_balls[j]); 
-    isSpectrin = v_balls[j].pid;
     updateBrownianPosition(v_balls[j]); 
   }
+
 }
 
-void BoundarySprings() {
-
-  //identify boundary balls
-
-  //for each find boundary partners
-
-  //calc periodic distance
-
-  //compute force
-}
 
 /* loop all springs to compute force on all balls */
 void ForceSprings() {
@@ -118,7 +99,7 @@ void ForceSprings() {
   Ball *b1, *b2;
 
   int j1,j2; //vector index for the balls
-  double L, X, F;
+  double L, X, K, F;
   double u[3], v[3], dr[3];
 
   size_t N = v_springs.size();
@@ -126,9 +107,10 @@ void ForceSprings() {
 
     spr = &v_springs[j];
 
-    L = spr->Length();
+    L = spr->getLength();
     X = spr->eql;
-    F = -k * (L - X);
+    K = spr->k;
+    F = - K * (L - X);
 
     j1 = spr->n1;
     j2 = spr->n2;
@@ -147,9 +129,45 @@ void ForceSprings() {
   }
 }
 
+/* repels spectrin from surface, tethers actin to surface*/
+void SurfaceForce() {
+  int N = nBalls;
+  Ball *b;
+
+  int isActin;  
+  for (size_t j=0; j<N; j++) {
+    b = & v_balls[j];
+    isActin = b->pid; 
+
+    if (isActin) {
+      b->r[2] = zSurface(b->r[0],
+			 b->r[1]); //better way?
+      continue;
+    } 
+
+    //else: is spectrin
+    double x,y,z,z0;  
+    double r,F;
+    x = b->r[0];
+    y = b->r[1];
+    z = b->r[2]; //should be negative
+    z0= zSurface(x,y);    
+
+    if (z > z0) {
+      cout << "Warning: z > z0!" << endl;
+    }
+
+    r = abs(z - z0);
+    F = LJforce(r);
+    b->F[2] += F; //sign?
+  }
+}
+
+
 void updateBrownianPosition(Ball &b) {
 
   double D = 0.01;
+  double m = b.m;
 
   for (int i=0; i<3; i++) {
     b.r[i] += b.F[i]/m * dt;
@@ -161,6 +179,7 @@ void updateBrownianPosition(Ball &b) {
 void updatePosition(Ball &b) {
 
   double a[3];
+  double m = 1; //temp fix
   for (int i=0; i<3; i++) {
     a[i] = b.F[i]/m;
 
