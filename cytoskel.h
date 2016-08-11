@@ -51,25 +51,25 @@ float dt = 0.005; //time step physics
 int ts = 30;      //time step rendering
 
 int _nSYS = 3;  //side length is Twice this #
-int _nSpectrin = 6; //number of spectrin Springs between each actin
+int _nSpectrin = 7; //number of spectrin Springs between each actin
 double _lActin = 0.9; //initial length between Actin
 double _Contour = 2.5 * _lActin;
 
 float msd = 0;
-double _k = 1; 
+double _k = 10; 
 double _m = 1;
 
-FILE *f1, *f2, *f3;
-FILE *kx, *ky;
-
+Ball* Particle = 0;
 vector<Ball> v_balls;
 vector<Spring> v_springs;
+
+FILE *f1, *f2, *f3, *f4;
+FILE *kx, *ky;
 
 void init();
 void hexInit();
 void meshInit();
 void spectrinInit();
-vector<Spring> subInit(vector<Spring> vs);
 void initPID();
 void filesInit();
 void filesClose();
@@ -83,7 +83,7 @@ void updatePosition(Ball &);
 void updateBrownianPosition(Ball &);
 
 void SurfaceForce();
-double LJforce(double);
+double LJforce(double,double);
 double zSurface(double, double);
 
 float calcMSD(float**);
@@ -98,7 +98,7 @@ void writeBalls(FILE*);
 void writeSprings(FILE*);
 void measureEdge(FILE*);
 void measureEnergy();
-void measureContour();
+void measureContour(FILE*);
 void writeKaranXY(FILE*,FILE*);
 
 /* function def */
@@ -164,7 +164,7 @@ Spring::Spring (int b1, int b2) {
 
   /* sets equilibrium length 
      as some fraction f of initial length */
-  float feq = 0.8;
+  float feq = 1;
   L = getLength();
   eql = feq * L; 
  
@@ -322,116 +322,6 @@ void hexInit() {
 
 }
 
-void toyInit() {
-  Ball a1(0,0,0);
-  Ball a2(2,0,0);
-  v_balls.push_back(a1);
-  v_balls.push_back(a2);
-
-  Spring s1 = Spring(0,1);
-  v_springs.push_back(s1);
-
-}
-
-float distBall(Ball *b1, Ball *b2) {
-
-  float L = 0;
-  float r1[3],r2[3],dr[3];
-  for (int i=0; i<3; i++) {
-
-    r1[i] = b1->r[i];
-    r2[i] = b2->r[i];
-
-    dr[i] = r2[i] - r1[i];
-
-    L += dr[i]*dr[i];
-  }
-  L = sqrt(L);
-  
-  return L;
-}
-
-//returns norm from origin of a to origin of b
-vector<float> normBall(Ball *a, Ball *b) {
-
-  float u[3],v[3],n[3];
-  for (int i=0;i<3;i++) {
-    u[i] = a->r[i];
-    v[i] = b->r[i];
-
-    n[i] = v[i] - u[i];
-  }
-
-  float m=0; //magnitutde
-  for(int j=0; j<3; j++) {
-    m += n[j]*n[j];
-  }
-  m = sqrt(m);
-  /* I could make a subroutine,
-     but that would pass an array and return a double */
-
-  vector<float> norm = vector<float>(3);
-  for(int j=0; j<3; j++) {
-    norm[j] = n[j]/m;
-  }
-
-  return norm;
-}
-
-vector<Spring> subInit(vector<Spring> vs) {
-
-  //makes a copy
-  int N = vs.size();
-  int n = _nSpectrin; //new springs :: 1 should be identity
-  Spring *spr;
-  Ball *b1, *b2;
-  //  double dx, dy;
-  double r1[3],r2[3],dr[3];
-  double x,y;
-
-  vector<Spring> newSpring_v;
-  //for each spring
-  for (int j=0; j<N; j++) {
-    spr = &vs.at(j);
-
-    int k = v_balls.size(); 
-    int j1 = spr->n1; 
-    int j2 = spr->n2; 
-
-    b1 = &v_balls.at(j1);
-    b2 = &v_balls.at(j2);
-
-    for (int i=0; i<3; i++) {
-      r1[i] = b1->r[i];
-      r2[i] = b2->r[i];
-      dr[i] = (r2[i] - r1[i]) / n;
-    }
-
-    //create N-1 new balls
-    double z0 = 0; //make this a function of string position!
-    for (int i=1; i<n; i++) {
-      x = r1[0] + i*dr[0];
-      y = r1[1] + i*dr[1];
-      Ball b(x,y,z0);
-      b.pid = 0;
-      v_balls.push_back(b);
-    }
-
-    //connect w N new springs (+2 old balls)
-    if (n == 1) return vs;
-
-    newSpring_v.push_back( Spring(j1,k) ); 
-    for (int i=1; i<n-1; i++) {
-      newSpring_v.push_back( Spring(k, k+1) );
-      k++;
-    }
-    newSpring_v.push_back( Spring(k, j2) );
-
-  }
-
-  return newSpring_v;
-}
-
 void spectrinInit() {
 
   //makes a copy
@@ -512,12 +402,25 @@ void initKaran() {
   fprintf(ky, "%i\n\n" , nBalls);
 }
 
+void toyInit() {
+  Ball a1(0,0,0);
+  Ball a2(2,0,0);
+  v_balls.push_back(a1);
+  v_balls.push_back(a2);
+
+  Spring s1 = Spring(0,1);
+  v_springs.push_back(s1);
+
+}
+
+
 void fileInit() {
 
   cout << " initializing file.." << endl;
   f1 = fopen("balls.dat", "w");
   f2 = fopen("springs.dat", "w");
-  f3 = fopen("force.dat", "w");
+  f3 = fopen("force.txt", "w");
+  f4 = fopen("contour.txt", "w");
 
   /* Writes nTime, nBalls, and nSprings */
   nBalls = v_balls.size();
@@ -542,6 +445,7 @@ void filesClose() {
   fclose(f1);
   fclose(f2);
   fclose(f3);
+  fclose(f4);
   fclose(kx);
   fclose(ky);
   cout << "files written." << endl;
@@ -565,6 +469,51 @@ void initPID() {
   }
   fprintf(f1, "\n\n");
 
+}
+
+float distBall(Ball *b1, Ball *b2) {
+
+  float L = 0;
+  float r1[3],r2[3],dr[3];
+  for (int i=0; i<3; i++) {
+
+    r1[i] = b1->r[i];
+    r2[i] = b2->r[i];
+
+    dr[i] = r2[i] - r1[i];
+
+    L += dr[i]*dr[i];
+  }
+  L = sqrt(L);
+  
+  return L;
+}
+
+//returns norm from origin of a to origin of b
+vector<float> normBall(Ball *a, Ball *b) {
+
+  float u[3],v[3],n[3];
+  for (int i=0;i<3;i++) {
+    u[i] = a->r[i];
+    v[i] = b->r[i];
+
+    n[i] = v[i] - u[i];
+  }
+
+  float m=0; //magnitutde
+  for(int j=0; j<3; j++) {
+    m += n[j]*n[j];
+  }
+  m = sqrt(m);
+  /* I could make a subroutine,
+     but that would pass an array and return a double */
+
+  vector<float> norm = vector<float>(3);
+  for(int j=0; j<3; j++) {
+    norm[j] = n[j]/m;
+  }
+
+  return norm;
 }
 
 
@@ -724,14 +673,46 @@ double pow(double x, int n) {
   return ans;
 }
 
+/*
+void newLJ (Ball *b1, Ball *b2) {
+  
+  a1 = b1->radius;
+  a2 = b2->radius;
 
-double LJforce(double r) {
+  x1[] = b1->r[];
+  x2[] = b2->r[];
+  r[] = x2[] - x1[];
+
+  R = mag(r);
+  n[] = r[] / R;
+
+  a0 = _rSpectrin;
+
+  sigma = 2 * a0;
+  //sigma = a1 + a2;
+
+  f = 1.12246;
+  m = f * sigma;
+  e = _e; //?? 
+  // R = R - abs(a2 - a1); ??
+  p = m/R;
+
+  F = 12 * e / m * pow(p,7) * ( pow(p,6) - 1 );
+
+*/
+    /* I want my force to return ONLY the magnitude
+       that I may handle the direction elsewhere
+       as dictated by the Case */
+
+double LJforce(double r, double sigma) {
+
+  /* r_min : F = 0, truncate potential
+     sigma : U = 0, is sum of radii (a+b) */
 
   double F, e, m, p;
   e = 0.2; //I choose to absorb 12 into e
   //m = 0.45; 
-  m = 0.1; 
-  // m = sigma(p);
+  m = sigma*1.1225;
 
   if (r > m) return 0;
   if (r < 0.05) {
@@ -743,7 +724,6 @@ double LJforce(double r) {
   p = m/r;
   p = pow(p,6);
   F =  - e /r * p * (p - 1);
-  //F =  - e /r * p * p;
 
   return F;
 }
@@ -756,7 +736,6 @@ double zSurface(double x, double y) {
   return 0.1;
 }
 
-Ball* Particle = 0;
 void initParticle() {
 
   double z = 2;
@@ -803,6 +782,8 @@ void ParticleInteraction() {
   //how can I be sure that none are INSIDE the Particle?
 
 }
+
+
 void measureEdge(FILE* f) {
   int N = nBalls;
   Ball *b;
@@ -839,7 +820,7 @@ void measureEnergy() {
   //  cout << E << endl;
 }
 
-void measureContour() {
+void measureContour(FILE *f) {
 
   /* the springs are created N at a time
      so I can exploit this in reading the segments */
@@ -856,11 +837,13 @@ void measureContour() {
 
     if (j == 0) continue;
     if (j%n == 0) {
-      cout << C << endl;
+      //cout << C << endl;
+      fprintf(f, "%f ", C);
       C = 0;
     }
   }
-  cout << endl;
+  //cout << endl;
+  fprintf(f,"\n");
 }
 
 /* for misc purposes */
