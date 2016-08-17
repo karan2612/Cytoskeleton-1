@@ -18,12 +18,13 @@ void meshInit() {
 
   int N=_nSYS;
   double L = _lActin;
+  double h = sqrt(3)*L/2;
 
-  double a = -L*(N - 1./2);
-  double x0=a,y0=a;
+  double a = -(N - 1/2.);
+  double x0 = L*a;
+  double y0 = h*a;
   double z0 = 0;
 
-  double h = sqrt(3)*L/2;
 
   /* Build Balls */
   Ball *b;
@@ -84,12 +85,16 @@ void meshInit() {
 }
 
 
-void spectrinInit() {
+/*  int n = _nSpectrin; //new springs :: 1 should be identity */
+void spectrinInit(int n) {
 
   //makes a copy
   //vector<Spring> vs = v_springs;
   int N = v_springs.size();
-  int n = _nSpectrin; //new springs :: 1 should be identity
+  if (N < 1) {
+    cout << "Error: spring vector is empty!" << endl;
+    getc(stdin);
+  }
 
   Spring *spr;
   Ball *b1, *b2;
@@ -147,17 +152,21 @@ void spectrinInit() {
   //haben Sie memory leak??
   v_springs = newSpring_v;
 
-  cout << "   spectrin spring complete " 
-       << n << endl;
+  cout << "   spectrin spring complete " << n << endl;
+       
 }
 
 void fileInit() {
 
   cout << " initializing file.." << endl;
+
+  // is it ineffective to do all of these all the time?
   f1 = fopen("balls.dat", "w");
   f2 = fopen("springs.dat", "w");
   f3 = fopen("force.txt", "w");
   f4 = fopen("contour.txt", "w");
+  f5 = fopen("part.txt", "w");
+  f6 = fopen("zForce.txt", "w");
 
   /* Writes nTime, nBalls, and nSprings */
   nBalls = v_balls.size();
@@ -183,6 +192,9 @@ void filesClose() {
   fclose(f2);
   fclose(f3);
   fclose(f4);
+  fclose(f5);
+  fclose(f6);
+
   fclose(kx);
   fclose(ky);
   cout << "files written." << endl;
@@ -211,8 +223,18 @@ void randInit() {
 
 void initParticle() {
 
-  double z = 2;
+  /* Let wrapping fraction c (0,2)
+     then z = c * R (if z = 0, c=0, at psi=0)
+   */
+  double z,c,R;
+  double buffer;
+  
+  c = -0.2; //wrapping fraction
+  R = 1.1 * _lActin; //input radius
+  z = R * (1-c);
+
   Particle = new Ball(0,0,z);  //need to add radius!
+  Particle->R = R;
 
 }
 // also need shorter name
@@ -272,25 +294,36 @@ void hexInit() {
 }
 
 void toyInit() {
-  Ball a1(0,0,0);
-  Ball a2(2,0,0);
+  Ball a0(-1,0,0.);
+  Ball a1(0,0,0.);
+  Ball a2(1,0,0.);
+  v_balls.push_back(a0);
   v_balls.push_back(a1);
   v_balls.push_back(a2);
 
   Spring s1 = Spring(0,1);
+  Spring s2 = Spring(1,2);
   v_springs.push_back(s1);
+  v_springs.push_back(s2);
 
 }
 
+/* Equilibriates the system, 
+   or add desired displacement */
+void sysConfig() {
+  
+  int N = v_balls.size();
+  int j;
+  for (j=0; j<N; j++) {
 
-void initKaran() {
+    v_balls[j].pid = 1;
+    v_balls[j].isEdge = false;
+  }
 
-  /* MISSING: x0 init */
-  kx = fopen("karanX.txt", "w");
-  fprintf(kx, "%i\n" , nTime);
-  fprintf(kx, "%i\n\n" , nBalls);
+  int n = v_springs.size();
+  float f = 0.4;
+  for (j=0; j<n; j++) {
+       v_springs[j].eql = f * v_springs[j].L;
+  }
 
-  ky = fopen("karanY.txt", "w");
-  fprintf(ky, "%i\n" , nTime);
-  fprintf(ky, "%i\n\n" , nBalls);
 }

@@ -1,12 +1,16 @@
-#include "cytoskel.h"
+#include "global.h"
+#include "init.h"
+#include "physics.h"
+#include "analysis.h"
+
 int main() {
 
   cout << "hello world!" << endl;
 
   init();
-  //  toyInit();
 
   physics();
+  writeForce3D();
 
   filesClose();
   return 0;
@@ -17,7 +21,7 @@ void init() {
   /* Build Cytoskeleton System */
   cout << " initializing system.." << endl;
   meshInit();
-  spectrinInit();
+  spectrinInit(_nSpectrin);
   initParticle();
 
   /* Set Files and Rand*/
@@ -39,16 +43,18 @@ void physics() {
   while (T<tmax) {
 
     timeStep();
-
-    if (t % ts == 0) { 
-      t_count++;
-      doAnalysis();
-    }
-
     t++;
     T += dt;
-  }
 
+    if (T < 500) continue;
+    if (t % ts == 0) { 
+
+      t_count++;
+      doAnalysis();
+
+      cerr << t_count << "\r";
+    }
+  }
   cout << "   actual time steps: " << t_count << endl;
   cout << " finished physics.." << endl;
 }
@@ -60,33 +66,52 @@ void timeStep() {
   size_t N = nBalls;
 
   /* Zeros Forces */
-  for (size_t j=0; j<N; j++) {
-    for(int i=0; i<3; i++) {
+  for(int i=0; i<3; i++) {
+    for (size_t j=0; j<N; j++) {
       v_balls[j].F[i] = 0;
     }
+    Particle->F[i] = 0;
   }
+
 
   /* Tally Forces */
   ForceSprings();
   SurfaceForce();
-  //ParticleInteraction();
+  ParticleInteraction();
 
   /* Update Particles */
   for (size_t j=0; j<N; j++) {
 
     if (v_balls[j].isEdge) continue; 
     //updatePosition(v_balls[j]); 
-    updateBrownianPosition(v_balls[j]); 
+    updateBrownian(v_balls[j]); 
   }
-
+  
+  sampleForceZ();
 }
 
+
+void sampleForceZ() {
+
+  float z = Particle->F[2];
+  statForce.push_back(z);
+}
+
+void moveParticle() {
+
+  Particle->r[2] -= 0.013;
+
+}
 void doAnalysis() {
  
   /* make measurements */
-  measureEdge(f3);
-  measureEnergy();
-  measureContour();
+  // measureEdge(f3);
+  //measureSpringEnergy();
+  //measureContour(f4);
+  sampleForce3D();
+  moveParticle();
+  //  cout << Particle->r[2] << endl;
+
   //  if (_msd) fprintf(f3, "%f\n", msd);
   //  writeKaranXY(kx,ky);
 
@@ -95,160 +120,5 @@ void doAnalysis() {
   writeSprings(f2);
 }
 
-/* loop all springs to compute force on all balls */
-void ForceSprings() {
 
-  Spring *spr;
-  Ball *b1, *b2;
-
-  int j1,j2; //vector index for the balls
-  double L, X, K, F;
-  double u[3], v[3], dr[3];
-
-  size_t N = v_springs.size();
-  for (size_t j=0; j<N; j++) {
-
-    spr = &v_springs[j];
-
-    L = spr->getLength();
-    X = spr->eql;
-    K = spr->k;
-    F = - K * (L - X);
-
-    j1 = spr->n1;
-    j2 = spr->n2;
-    b1 = &v_balls[j1];
-    b2 = &v_balls[j2];
-
-    for(int i=0; i<3; i++) {
-      u[i] = b1->r[i];
-      v[i] = b2->r[i];
-
-      dr[i] = u[i]-v[i];
-      b1->F[i] += F * dr[i] / L;
-      b2->F[i] -= F * dr[i] / L;
-    }
-
-  }
-}
-
-/* repels spectrin from surface, tethers actin to surface*/
-void SurfaceForce() {
-  int N = nBalls;
-  Ball *b;
-
-  int isActin;  
-  for (size_t j=0; j<N; j++) {
-    b = & v_balls[j];
-    isActin = b->pid; 
-
-    if (isActin) {
-      b->r[2] = zSurface(b->r[0],
-			 b->r[1]); //better way?
-      continue;
-    } 
-
-    //else: is spectrin
-    double x,y,z,z0;  
-    double r,F;
-    x = b->r[0];
-    y = b->r[1];
-    z = b->r[2]; //should be negative
-    z0= zSurface(x,y);    
-
-    if (z > z0) {
-      cout << "Warning: z > z0!" << endl;
-    }
-
-    r = abs(z - z0);
-    F = LJforce(r);
-    b->F[2] += F; //sign?
-  }
-}
-
-
-void updateBrownianPosition(Ball &b) {
-
-  double D = 0.01;
-  double m = b.m;
-
-  for (int i=0; i<3; i++) {
-    b.r[i] += b.F[i]/m * dt;
-    b.r[i] += sqrt(2*D*dt)*randi.randNorm(0,1); 
-  }
-
-}
-
-void updatePosition(Ball &b) {
-
-  double a[3];
-  double m = 1; //temp fix
-  for (int i=0; i<3; i++) {
-    a[i] = b.F[i]/m;
-
-    b.v[i] += a[i] * dt;
-    b.r[i] += b.v[i] * dt;
-  }
-}
-
-
-void writeBalls(FILE* f) {
-
-  int n = v_balls.size();
-  for(int j=0; j<n; j++) {
-    for(int i=0; i<3; i++) {
-      fprintf(f, "%f ", v_balls[j].r[i]);   
-    }
-    fprintf(f, "\n");
-  }
-
-  fprintf(f, "\n"); //new timestep
-}
-
-
-void writeSprings(FILE* f) {
-
-  Spring *spr;
-  Ball *b1, *b2;
-  int n = v_springs.size();
-
-  float L;
-  float dx,dy,dz;
-  float nx,ny,nz;
-  float r1[3],r2[3],dr[3],nr[3];
-
-  /* fetch information about position, direction, L */
-  for(int j=0; j<n; j++) {
-
-    spr = &v_springs.at(j);
-    b1 = &v_balls.at(spr->n1);
-    b2 = &v_balls.at(spr->n2);
-
-    L = 0;
-    for (int i=0; i<3; i++) {
-      
-      r1[i] = b1->r[i];
-      r2[i] = b2->r[i];
-      dr[i] = r2[i] - r1[i];
-      
-      L += dr[i]*dr[i];
-    }
-    L = sqrt(L);
-
-    for (int i=0; i<3; i++) {
-      fprintf(f, "%f " , r1[i]);
-    }
-    
-    for (int i=0; i<3; i++) {
-      nr[i] = dr[i]/L; //necessary?
-      fprintf(f, "%f ", nr[i]);
-    }
-
-    fprintf(f, " %f\n", L);
-  }
-
-  fprintf(f, "\n");
-}
-
-
-
+ 

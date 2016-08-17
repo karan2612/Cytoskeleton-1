@@ -46,20 +46,22 @@ MTRand randi;
 bool _msd = false;
 int nBalls, nSprings, nTime; 
 
-float tmax = 30; //time absolute stop
-float dt = 0.005; //time step physics
-int ts = 30;      //time step rendering
+float tmax = 50; //time absolute stop
+float dt = 0.001; //time step physics
+int ts = 100;      //time step rendering
 
-int _nSYS = 3;  //side length is Twice this #
-int _nSpectrin = 7; //number of spectrin Springs between each actin
-double _lActin = 0.9; //initial length between Actin
+int _nSYS = 4;  //side length is Twice this #
+int _nSpectrin = 5; //number of spectrin Springs between each actin
+double _lActin = 0.6; //initial length between Actin
 double _Contour = 2.5 * _lActin;
+float _sigma = 0.1; // for now
+
 
 float msd = 0;
-double _k = 10; 
+double _k = 20; 
 double _m = 1;
 
-FILE *f1, *f2, *f3, *f4;
+FILE *f1, *f2, *f3, *f4, *f5, *f6;
 FILE *kx, *ky;
 
 Ball* Particle = 0;
@@ -69,18 +71,19 @@ vector<Spring> v_springs;
 void init();
 void hexInit();
 void meshInit();
-void spectrinInit();
+void spectrinInit(int);
 void initPID();
 void filesInit();
 void filesClose();
 void initKaran();
+void moveParticle();
 
 void physics();
 void timeStep();
 void doAnalysis();
 void ForceSprings();
 void updatePosition(Ball &);
-void updateBrownianPosition(Ball &);
+void updateBrownian(Ball &);
 
 void SurfaceForce();
 double LJforce(double,double);
@@ -94,11 +97,16 @@ vector<float> normBall(Ball*, Ball*);
 bool isEdge(int, int, int);
 int edgeType(int, int, int);
 
+pair<float,float> doStats(vector<float> &v);
+void writeForceZ(FILE *f);
+
 void writeBalls(FILE*);
 void writeSprings(FILE*);
 void measureEdge(FILE*);
-void measureEnergy();
+void measureSpringEnergy();
 void measureContour(FILE*);
+void sampleForceZ();
+void sampleForce3D();
 void writeKaranXY(FILE*,FILE*);
 
 /* function def */

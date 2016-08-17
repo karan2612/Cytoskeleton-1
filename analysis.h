@@ -1,7 +1,9 @@
 /*
   This file contains the following Analysis functions
+    writeBalls()
+    writeSprings()
     measureEdge()
-    measureEnergy()
+    measureSpringEnergy()
     measureContour()
     show()
 
@@ -10,6 +12,66 @@
     calcMSD()
     calcMSDx()
  */
+
+void writeBalls(FILE* f) {
+
+  int n = v_balls.size();
+  for(int j=0; j<n; j++) {
+    for(int i=0; i<3; i++) {
+      fprintf(f, "%f ", v_balls[j].r[i]);   
+    }
+    fprintf(f, "\n");
+  }
+
+  fprintf(f, "\n"); //new timestep
+}
+
+
+void writeSprings(FILE* f) {
+
+  Spring *spr;
+  Ball *b1, *b2;
+  int n = v_springs.size();
+
+  float L;
+  float dx,dy,dz;
+  float nx,ny,nz;
+  float r1[3],r2[3],dr[3],nr[3];
+
+  /* fetch information about position, direction, L */
+  for(int j=0; j<n; j++) {
+
+    spr = &v_springs.at(j);
+    b1 = &v_balls.at(spr->n1);
+    b2 = &v_balls.at(spr->n2);
+
+    L = 0;
+    for (int i=0; i<3; i++) {
+      
+      r1[i] = b1->r[i];
+      r2[i] = b2->r[i];
+      dr[i] = r2[i] - r1[i];
+      
+      L += dr[i]*dr[i];
+    }
+    L = sqrt(L);
+
+    for (int i=0; i<3; i++) {
+      fprintf(f, "%f " , r1[i]);
+    }
+    
+    for (int i=0; i<3; i++) {
+      nr[i] = dr[i]/L; //necessary?
+      fprintf(f, "%f ", nr[i]);
+    }
+
+    fprintf(f, " %f\n", L);
+  }
+
+  fprintf(f, "\n");
+}
+
+
 
 void measureEdge(FILE* f) {
   int N = nBalls;
@@ -31,7 +93,7 @@ void measureEdge(FILE* f) {
   fprintf(f, "\n");
 }
 
-void measureEnergy() {
+void measureSpringEnergy() {
 
   int N = nSprings;
 
@@ -47,6 +109,9 @@ void measureEnergy() {
   //  cout << E << endl;
 }
 
+
+
+/* writes all the contours to file, at a given t */
 void measureContour(FILE *f) {
 
   /* the springs are created N at a time
@@ -62,10 +127,12 @@ void measureContour(FILE *f) {
     s = &v_springs.at(j);
     C += s->getLength();
 
+    //    cout << j << endl;
     if (j == 0) continue;
-    if (j%n == 0) {
+    if ((j+1) % n == 0) {
       //cout << C << endl;
       fprintf(f, "%f ", C);
+
       C = 0;
     }
   }
@@ -73,82 +140,157 @@ void measureContour(FILE *f) {
   fprintf(f,"\n");
 }
 
-/* for misc purposes */
 
+/* Samples contour through ALL t
+   for single entropic spring */
+vector<float> conTime;
+float sampleContour() {
 
-void writeKaranXY(FILE* fx, FILE* fy) {
+  int N = v_springs.size();
 
-  size_t N = v_balls.size();
-  float x=0;
-  float y=0;
-  for (int j=0; j<N; j++) {
-    x = v_balls[j].r[0];
-    fprintf(fx,"%f ",x);
-
-    y = v_balls[j].r[1];
-    fprintf(fy,"%f ",y);
+  Spring *s;
+  float C=0; //contour
+  for(int j=0; j<N; j++) {
+    s = &v_springs.at(j);
+    C += s->getLength();
   }
-  fprintf(fx,"\n");
-  fprintf(fy,"\n");
+
+  return C;
+}
+
+vector<vector<float> > forceST(3);
+void sampleForce3D() {
+
+  float F=0, Fi;
+  for (int i=0; i<3; i++) {
+    Fi = Particle->F[i];
+    //    cout << Fi << endl;
+    forceST.at(i).push_back(Fi);
+    
+    F += Fi * Fi;
+  }
+  F = sqrt(F);
+
+  //    cout << " total force " << F << endl;
+  //    cout << endl;
+
+
+  writeForceZ(f6);
 }
 
 
-/* new development: no spring, just brown*/
-float calcMSD(float **r0) {
+vector<float> statForce;
+void writeForceZ(FILE *f) {
 
-  size_t N = v_balls.size(); 
+  pair<float,float> out;
+  out = doStats(statForce);
 
-  float rt[N][3];
-  float sum=0;  
+  float fz,z,zdev;
+  //  fz = Particle->F[2];
+  z = Particle->r[2];
+  fz = out.first;
+  zdev = out.second;
+  cout << z << " " 
+       << fz << " "
+       << zdev << endl;
 
-  for (size_t j=0; j<N; j++) {
-    /* Zeros Forces */
-    for (int i=0; i<3; i++) {
-      v_balls[j].F[i] = 0;
-    }
+  fprintf(f,"%f %f %f \n",-z,fz,zdev);
 
-    /* update physics (no springs) */
-    updateBrownianPosition(v_balls[j]); 
-
-    /* compute MSD */
-    for (int i=0; i<3; i++) {
-      rt[j][i] = v_balls.at(j).r[i];
-      sum += (rt[j][i] - r0[j][i])
-   	    *(rt[j][i] - r0[j][i]);
-    }
-  }
-
-  sum = sum/N; //norm
-  return sum;
+  statForce.clear();
 }
 
-float calcMSDx(float *x0) {
+void writeForce3D() {
+  
+  int S = forceST.size();
+  int T = forceST[0].size();
+  cout << S << " " << T << endl;
 
-  size_t N = v_balls.size(); 
-
-  float xt[N];
-  float sum=0;  
-
-  for (size_t j=0; j<N; j++) {
-    /* Zeros Forces */
-    for (int i=0; i<3; i++) {
-      v_balls[j].F[i] = 0;
+  double F[3];
+  double fx, fy, fz;
+  for (int t=0; t<T; t++) {
+    for (int j=0; j<3; j++) {
+      F[j] = forceST[j].at(t);
     }
-
-    /* update physics (no springs) */
-    updateBrownianPosition(v_balls[j]); 
-
-    /* compute MSD */
-    xt[j] = v_balls.at(j).r[0];
-    sum += (xt[j] - x0[j])
-          *(xt[j] - x0[j]);
+    fprintf(f5,"%f %f %f\n", F[0], F[1], F[2]);
   }
-  //cout << sum << " / " << N;
-  sum = sum / N; //norm
-  //cout << " = " << sum << endl;
-  return sum;
+  
+  // print time averaged force
+  double Ft[3];
+  for (int j=0; j<3; j++) {
+    Ft[j] = 0;
+
+    for (int t=0; t<T; t++) {
+      Ft[j] += forceST[j].at(t);
+    }
+    Ft[j] = Ft[j] / T;
+    cout << Ft[j] << endl;
+  }
+
 }
 
+
+/* gets Deviation for data in HardCoded vector */
+float getDev(vector<float> &v) {
+
+  int N = v.size();
+
+  //calc mean
+  float sum, mean, dev;
+  sum = 0;
+  for (int j=0; j < N; j++) {
+    sum += v.at(j);
+  }
+  mean = sum / N;
+
+  //calc stdev
+  sum = 0;
+  for (int j=0; j < N; j++) {
+    sum += (mean - v.at(j))
+          *(mean - v.at(j));
+  }
+  dev = sqrt(sum/N);
+
+  return dev;
+}
+
+pair<float,float> doStats(vector<float> &v) {
+  
+  pair<float,float> out;
+
+  int N = v.size();
+
+  //calc mean
+  float sum, mean, dev;
+  sum = 0;
+  for (int j=0; j < N; j++) {
+    sum += v.at(j);
+  }
+  mean = sum / N;
+
+  //calc stdev
+  sum = 0;
+  for (int j=0; j < N; j++) {
+    sum += (mean - v.at(j))
+          *(mean - v.at(j));
+  }
+  dev = sqrt(sum/N);
+
+  out.first = mean;
+  out.second = dev;
+  return out;
+}
+
+void mPForce(FILE* f) {
+
+  /* 
+     Force on particle already stored 
+     mag calculated at edge
+     dir points toward origin
+
+     even 2D cross section will have 3D force
+   */
+
+}
 
 
 void show() {

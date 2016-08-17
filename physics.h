@@ -2,6 +2,12 @@
   This file contains the following Physics
     distBall(Ball*, Ball*)
     normBall(Ball*, Ball*)
+    magForce(Ball*)
+
+    forceSprings()
+    surfaceForce()
+    updateBrownianPosition(Ball &)
+    updatePosition(all &)
     LJforce(r, sig)
     zSurface(x, y)
 
@@ -53,27 +59,135 @@ vector<float> normBall(Ball *a, Ball *b) {
   return norm;
 }
 
+double magForce(Ball *b) {
 
-double LJforce(double r, double sigma) {
+  double F=0, f=0;
+  for (int i=0; i<3; i++) {
+    f = b->F[i];
+    F += f*f;
+  }
+  return sqrt(F);
+}
+
+
+/* loop all springs to compute force on all balls */
+void ForceSprings() {
+
+  Spring *spr;
+  Ball *b1, *b2;
+
+  int j1,j2; //vector index for the balls
+  double L, X, K, F;
+  double u[3], v[3], dr[3];
+
+  size_t N = v_springs.size();
+  for (size_t j=0; j<N; j++) {
+
+    spr = &v_springs[j];
+
+    L = spr->getLength();
+    X = spr->eql;
+    K = spr->k;
+    F = - K * (L - X);
+
+    j1 = spr->n1;
+    j2 = spr->n2;
+    b1 = &v_balls[j1];
+    b2 = &v_balls[j2];
+
+    for(int i=0; i<3; i++) {
+      u[i] = b1->r[i];
+      v[i] = b2->r[i];
+
+      dr[i] = u[i]-v[i];
+      b1->F[i] += F * dr[i] / L;
+      b2->F[i] -= F * dr[i] / L;
+    }
+
+  }
+}
+
+/* repels spectrin from surface, tethers actin to surface*/
+void SurfaceForce() {
+  int N = nBalls;
+  Ball *b;
+
+  int isActin;  
+  for (size_t j=0; j<N; j++) {
+    b = & v_balls[j];
+    isActin = b->pid; 
+
+    if (isActin) {
+      b->r[2] = zSurface(b->r[0],
+			 b->r[1]); //better way?
+      continue;
+    } 
+
+    //else: is spectrin
+    double x,y,z,z0;  
+    double r,F;
+    x = b->r[0];
+    y = b->r[1];
+    z = b->r[2]; //should be negative
+    z0= zSurface(x,y);    
+
+    if (z > z0) {
+      cout << "Warning: z > z0!" << endl;
+    }
+
+    r = abs(z - z0);
+    F = LJforce(r,0.1); //hardcode surface sigma
+    b->F[2] += -F; //sign?
+  }
+}
+
+
+void updateBrownian(Ball &b) {
+
+  double D = 0.01;
+  double m = b.m;
+
+  for (int i=0; i<3; i++) {
+    b.r[i] += b.F[i]/m * dt;
+    b.r[i] += sqrt(2*D*dt)*randi.randNorm(0,1); 
+  }
+
+}
+
+void updatePosition(Ball &b) {
+
+  double a[3];
+  double m = 1; //temp fix
+  for (int i=0; i<3; i++) {
+    a[i] = b.F[i]/m;
+
+    b.v[i] += a[i] * dt;
+    b.r[i] += b.v[i] * dt;
+  }
+}
+
+double LJforce(double r, double d) {
 
   /* r_min : F = 0, truncate potential
-     sigma : U = 0, is sum of radii (a+b) */
+     sigma : U = 0, is const for all, 
+     but it should be the sum of radii d = (a+b) */
 
   double F, e, m, p;
-  e = 0.2; //I choose to absorb 12 into e
+  e = 0.01;
   //m = 0.45; 
-  m = sigma*1.1225;
+  m = 1.1225 * _sigma;
+  r = r - d + _sigma;
 
-  if (r > m) return 0;
-  if (r < 0.05) {
-    cout << "Warning: LJ Singularity from small r" << endl;
-  }
+  if (r > m) return 0; //yes, U(r') = 0
 
   /* F = 12 e/r [p12 - p6]  
       where p = r_min/r */
   p = m/r;
+  if (1/p < 0.05) 
+    cout << "Warning: LJ Singularity from small r" << endl;
+
   p = pow(p,6);
-  F =  - e /r * p * (p - 1);
+  F =  e /r * p * (p - 1);
 
   return F;
 }
@@ -95,33 +209,57 @@ void ParticleInteraction() {
     getc(stdin);
   }
  
-  double radius = 2.15; //hard code for now
-  double r;
+  double radius = Particle->R;
+  double r,d;
   vector<float> nm;
   double F;
 
   int N = nBalls;
   int count = 0;
   Ball *b;
+  //  cout << "***time step***" << endl;
   for (int j=0; j<N; j++) {
     
     b = & v_balls.at(j);
     r = distBall(b, Particle);
+    nm = normBall(b,Particle); // points b->P
 
-    if ( r < radius ) {
-      nm = normBall(b,Particle);
-      F = -5;
-      // F = LJForce(r);
-      for (int i=0; i<2; i++) {
+    if ( r < radius ) 
+    {
+
+      F = -5; //F- rides the nm from P->b
+      for (int i=0; i<3; i++) {
 	b->F[i] += F * nm[i];
       }
 
+    } else 
+    {
+      if (r > 1.5 * radius) {
+	//somehow count skips?
+	continue;
+      }
       count++;
+
+      d = (_sigma/2) + radius; // R_part + R_interactant
+      F = LJforce(r,d);
+      //      cout << F << endl;
+      for (int i=0; i<3; i++) {
+	b->F[i]        -= F *  nm[i];
+	Particle->F[i] += F *  nm[i];
+
+       	//cout << nm[i] << endl;
+      }
+
+      //investigate normals
+      float rt = sqrt( nm[0]*nm[0] + nm[1]*nm[1] );
+      float zt = nm[2];
+      float tan= zt/rt;
+      //      cout << tan << endl;
+      //      cout << endl;      
     }
+
   }   
 
-  //  cout << count << endl;
-
-  //how can I be sure that none are INSIDE the Particle?
+  //end of interactant loop
 
 }
