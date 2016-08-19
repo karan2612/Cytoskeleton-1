@@ -25,8 +25,8 @@ void init() {
   initParticle();
 
   /* Set Files and Rand*/
-  fileInit();
   randInit();
+  fileInit();
 }
 
 void physics() {
@@ -37,16 +37,17 @@ void physics() {
      ts - (int) time step output */
 
   cout << " beginning physics.." << endl;
-  int t=0, t_count=0;
 
   float T=0; 
-  while (T<tmax) {
+  int t=0, t_count=0;
+  //  while (T<tmax) {
+  while (t < nSteps) {
 
     timeStep();
     t++;
     T += dt;
 
-    if (T < 500) continue;
+    if (t < 500) continue;
     if (t % ts == 0) { 
 
       t_count++;
@@ -55,7 +56,11 @@ void physics() {
       cerr << t_count << "\r";
     }
   }
+
   cout << "   actual time steps: " << t_count << endl;
+  cout << "   final system time : " << T << endl;
+  
+  integrateWrappingEnergy();
   cout << " finished physics.." << endl;
 }
 
@@ -73,11 +78,10 @@ void timeStep() {
     Particle->F[i] = 0;
   }
 
-
   /* Tally Forces */
   ForceSprings();
   SurfaceForce();
-  ParticleInteraction();
+  //  ParticleInteraction();
 
   /* Update Particles */
   for (size_t j=0; j<N; j++) {
@@ -88,37 +92,49 @@ void timeStep() {
   }
   
   sampleForceZ();
-}
-
-
-void sampleForceZ() {
-
-  float z = Particle->F[2];
-  statForce.push_back(z);
-}
-
-void moveParticle() {
-
-  Particle->r[2] -= 0.013;
 
 }
+
 void doAnalysis() {
  
   /* make measurements */
-  // measureEdge(f3);
-  //measureSpringEnergy();
-  //measureContour(f4);
   sampleForce3D();
+  writeForceZ(f6); //mean Fz discovered in here!
   moveParticle();
-  //  cout << Particle->r[2] << endl;
-
-  //  if (_msd) fprintf(f3, "%f\n", msd);
-  //  writeKaranXY(kx,ky);
 
   /* for rendering */
   writeBalls(f1);
   writeSprings(f2);
 }
 
+
+void initParticle() {
+
+  /* Let wrapping fraction c (0,2)
+     then z = c * R (if z = 0, c=0, at psi=0)
+   */
+  double z,c,R;
+  double buffer;
+  
+  c = -0.2; //wrapping fraction
+  R = 1.1 * _lActin; //input radius
+  z = R * (1-c);
+
+  //  Particle = new Ball(0,0,z);
+  Particle = new Ball(0,0,z);
+  Particle->R = R;
+
+}
+
+/* somehow need to equilibriate system before this kicks in.
+   maybe it would be useful to make global the ellapsed time and step time, 
+   for easier access by skip logic
+*/
+void moveParticle() {
+
+  Particle->r[2] -= _dz;
+  //Particle->r[2] += _dz; //moving up
+
+}
 
  

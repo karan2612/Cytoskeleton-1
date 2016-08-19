@@ -6,7 +6,7 @@
 
     forceSprings()
     surfaceForce()
-    updateBrownianPosition(Ball &)
+    updateBrownian(Ball &)
     updatePosition(all &)
     LJforce(r, sig)
     zSurface(x, y)
@@ -157,7 +157,8 @@ void updateBrownian(Ball &b) {
 void updatePosition(Ball &b) {
 
   double a[3];
-  double m = 1; //temp fix
+  double m = b.m;
+  //  cout << b.F[2] << endl;
   for (int i=0; i<3; i++) {
     a[i] = b.F[i]/m;
 
@@ -221,6 +222,10 @@ void ParticleInteraction() {
   for (int j=0; j<N; j++) {
     
     b = & v_balls.at(j);
+
+    //
+    //if (b->pid == 0) continue;
+
     r = distBall(b, Particle);
     nm = normBall(b,Particle); // points b->P
 
@@ -243,6 +248,7 @@ void ParticleInteraction() {
       d = (_sigma/2) + radius; // R_part + R_interactant
       F = LJforce(r,d);
       //      cout << F << endl;
+
       for (int i=0; i<3; i++) {
 	b->F[i]        -= F *  nm[i];
 	Particle->F[i] += F *  nm[i];

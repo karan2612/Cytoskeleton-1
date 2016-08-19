@@ -11,12 +11,11 @@
   and the retired functions as well
     hexInit()
     toyInit()
-    initKaran() //for MSD
  */
 
 void meshInit() {
 
-  int N=_nSYS;
+  int N=_nSys;
   double L = _lActin;
   double h = sqrt(3)*L/2;
 
@@ -47,43 +46,90 @@ void meshInit() {
     }
   }
 
-  /* Build Springs */
-  int j;
-  for (int y=0; y<2*N; y++) {
-    for (int x=0; x<2*N; x++) {
-
-      j = 2*N*y + x;
-
-      if (x != 2*N-1) {
-	Spring s(j,j+1);
-	v_springs.push_back(s);
-      }
-
-      if (y != 2*N-1) {
-	Spring s1(j, j+2*N);
-	v_springs.push_back(s1);
-
-	if (y%2 == 0) { 
-	  /* y even */
-	  if (x != 0) {
-	    Spring s0(j, j+2*N - 1);
-	    v_springs.push_back(s0);
-	  }
-	} else { 
-	  /* y odd */
-	  if (x != 2*N-1) {
-	    Spring s0(j, j+2*N + 1);
-	    v_springs.push_back(s0);
-	  }
-	}
-      }// y != 2*N-1
-
-    }
-  }
+  springInit();
 
   cout << "   mesh complete" << endl;
 }
 
+
+void springInit() {
+
+  /* Build Springs */
+  int j;
+  int N = _nSys;
+  int n = 2*N;
+  for (int y=0; y<n; y++) {
+    for (int x=0; x<n; x++) {
+
+      j = n*y + x;
+
+      if (x != n-1) {
+	Spring s(j,j+1);
+	v_springs.push_back(s);
+      }
+
+      if (y == n-1) continue;
+      Spring s1(j, j+n);
+      v_springs.push_back(s1);
+
+      if (y%2 == 0) { /* y even */
+	if (x == 0) continue;
+	Spring s0(j, j+n - 1);
+	v_springs.push_back(s0);
+
+      } else { /* y odd */
+	if (x == n-1) continue;
+	Spring s0(j, j+n + 1);
+	v_springs.push_back(s0);
+      }
+      
+    }
+  }
+  cout << "proto-spring complete" << endl;
+}
+
+
+/* between mesh and spectrin, loop through existing balls 
+   and write nodes 
+
+   e1 and e0 stand for elemUP and elemDOWN respectively,
+  where an element is the triangular surface element connecting 3 balls
+*/
+void elemInit() {
+
+  Elem *e0, *e1;
+
+  /* borrowed from Build Springs */
+  int j;
+  int N = _nSys;
+  int n = 2*N;
+  for (int y=0; y<n; y++) {
+    for (int x=0; x<n; x++) {
+
+      if (x%n == 0) continue;
+      j = y*n + x;
+
+      if (y%2 == 0) {
+	e0 = new Elem(j,j+1,j+1-n);
+
+	if (y==n) continue;
+
+	e1 = new Elem(j,j+1,j+1+n);
+
+      } else {
+	e1 = new Elem(j,j+1,j+n);
+
+	if (y==0) continue;
+	e0 = new Elem(j,j+1,j-n);
+      }
+
+      if (e0) v_elems.push_back(*e0);
+      if (e1) v_elems.push_back(*e1);
+    }
+    
+  }
+
+}
 
 /*  int n = _nSpectrin; //new springs :: 1 should be identity */
 void spectrinInit(int n) {
@@ -167,6 +213,7 @@ void fileInit() {
   f4 = fopen("contour.txt", "w");
   f5 = fopen("part.txt", "w");
   f6 = fopen("zForce.txt", "w");
+  f7 = fopen("WrappingEnergy.txt", "w");
 
   /* Writes nTime, nBalls, and nSprings */
   nBalls = v_balls.size();
@@ -174,17 +221,17 @@ void fileInit() {
 
   nTime = (int) tmax/dt;
   nTime = nTime/ts + 1;
+
+  nTime = (int) nSteps/ts;
   cout << "   predicted time steps: " << nTime << endl;
+  cout << "   physics steps per time step: " << ts << endl;
+  cout << "   TOTAL differential steps: " << nSteps << endl;
 
   fprintf(f1, "%i\n" , nTime);
   fprintf(f1, "%i\n\n" , nBalls);
   fprintf(f2, "%i\n\n" , nSprings);
 
-  /* Defines pid in Render file */
   initPID();
-
-  //msdInit()
-  //  if (_msd) f3 = fopen("outMSD.txt", "w");
 }
 
 void filesClose() {
@@ -194,9 +241,8 @@ void filesClose() {
   fclose(f4);
   fclose(f5);
   fclose(f6);
+  fclose(f7);
 
-  fclose(kx);
-  fclose(ky);
   cout << "files written." << endl;
 }
 
@@ -219,25 +265,6 @@ void randInit() {
   unsigned int saat = (unsigned int)time(0); 
   randi.seed(saat);
 }
-
-
-void initParticle() {
-
-  /* Let wrapping fraction c (0,2)
-     then z = c * R (if z = 0, c=0, at psi=0)
-   */
-  double z,c,R;
-  double buffer;
-  
-  c = -0.2; //wrapping fraction
-  R = 1.1 * _lActin; //input radius
-  z = R * (1-c);
-
-  Particle = new Ball(0,0,z);  //need to add radius!
-  Particle->R = R;
-
-}
-// also need shorter name
 
 
 void hexInit() {

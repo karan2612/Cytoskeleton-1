@@ -6,12 +6,8 @@
     measureSpringEnergy()
     measureContour()
     show()
-
-  and the retired msd functions
-    writeKaranXY()
-    calcMSD()
-    calcMSDx()
  */
+
 
 void writeBalls(FILE* f) {
 
@@ -72,7 +68,6 @@ void writeSprings(FILE* f) {
 }
 
 
-
 void measureEdge(FILE* f) {
   int N = nBalls;
   Ball *b;
@@ -93,6 +88,7 @@ void measureEdge(FILE* f) {
   fprintf(f, "\n");
 }
 
+
 void measureSpringEnergy() {
 
   int N = nSprings;
@@ -109,8 +105,7 @@ void measureSpringEnergy() {
   //  cout << E << endl;
 }
 
-
-
+// to be retired??
 /* writes all the contours to file, at a given t */
 void measureContour(FILE *f) {
 
@@ -143,7 +138,6 @@ void measureContour(FILE *f) {
 
 /* Samples contour through ALL t
    for single entropic spring */
-vector<float> conTime;
 float sampleContour() {
 
   int N = v_springs.size();
@@ -158,7 +152,13 @@ float sampleContour() {
   return C;
 }
 
-vector<vector<float> > forceST(3);
+void sampleForceZ() {
+
+  float z = Particle->F[2];
+  statForce.push_back(z);
+}
+
+
 void sampleForce3D() {
 
   float F=0, Fi;
@@ -173,37 +173,36 @@ void sampleForce3D() {
 
   //    cout << " total force " << F << endl;
   //    cout << endl;
-
-
-  writeForceZ(f6);
 }
 
 
-vector<float> statForce;
 void writeForceZ(FILE *f) {
 
   pair<float,float> out;
   out = doStats(statForce);
 
   float fz,z,zdev;
-  //  fz = Particle->F[2];
   z = Particle->r[2];
   fz = out.first;
   zdev = out.second;
-  cout << z << " " 
-       << fz << " "
-       << zdev << endl;
+  //  cout << z << " " << fz << " " << zdev << endl;
 
   fprintf(f,"%f %f %f \n",-z,fz,zdev);
-
   statForce.clear();
+
+
+  // pass to Energy integrator
+  pair<float,float> in(z,fz);
+  forceTime.push_back(in);
+
 }
+
 
 void writeForce3D() {
   
   int S = forceST.size();
   int T = forceST[0].size();
-  cout << S << " " << T << endl;
+  //  cout << S << " " << T << endl;
 
   double F[3];
   double fx, fy, fz;
@@ -223,11 +222,32 @@ void writeForce3D() {
       Ft[j] += forceST[j].at(t);
     }
     Ft[j] = Ft[j] / T;
-    cout << Ft[j] << endl;
+    //    cout << Ft[j] << endl;
   }
 
 }
 
+void integrateWrappingEnergy(){
+  
+  cout << "  integrating Wrapping Energy!" << endl;
+  int N = forceTime.size();
+
+  float E=0;
+  float z,Fz;
+  float dz = _dz;
+  for (int j=0; j<N; j++) {
+    
+    z  = forceTime[j].first;
+    Fz = forceTime[j].second;
+
+    E += Fz * dz;
+
+    //write to file E(z)
+    fprintf(f7,"%.2f %f\n",-z,E);
+  }
+
+  
+}
 
 /* gets Deviation for data in HardCoded vector */
 float getDev(vector<float> &v) {
@@ -256,16 +276,22 @@ float getDev(vector<float> &v) {
 pair<float,float> doStats(vector<float> &v) {
   
   pair<float,float> out;
-
   int N = v.size();
-
+  /*  int buffer = 10; //
+  float percent = buffer / (float)N;
+  cout << "throwing out first " << percent 
+       << "% of force time steps for equlibrium" << endl;
+  */
   //calc mean
   float sum, mean, dev;
   sum = 0;
   for (int j=0; j < N; j++) {
+    //if (j < buffer) continue;
+    
     sum += v.at(j);
   }
   mean = sum / N;
+  //  mean = sum / (N - buffer);
 
   //calc stdev
   sum = 0;
@@ -280,17 +306,6 @@ pair<float,float> doStats(vector<float> &v) {
   return out;
 }
 
-void mPForce(FILE* f) {
-
-  /* 
-     Force on particle already stored 
-     mag calculated at edge
-     dir points toward origin
-
-     even 2D cross section will have 3D force
-   */
-
-}
 
 
 void show() {
