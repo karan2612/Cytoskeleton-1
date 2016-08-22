@@ -11,7 +11,7 @@ using namespace std;
   Control Box
  *************/
 
-int nSteps = 5000000;
+int nSteps = 2000000;
 //float tmax = 50; //time absolute stop
 float dt = 0.001; //time step physics
 int ts = 20000;      //time step rendering
@@ -119,7 +119,7 @@ void filesClose();
 void moveParticle();
 
 void physics();
-void timeStep();
+void timeStep(int);
 void doAnalysis();
 void ForceSprings();
 void updatePosition(Ball &);
@@ -319,7 +319,7 @@ int edgeType(int i, int j, int N) {
   return -1;
 }
 
-double pow(double x, int n) {
+double _pow(double x, int n) {
 
   double ans = 1;
   for(int i=0; i<n; i++) {

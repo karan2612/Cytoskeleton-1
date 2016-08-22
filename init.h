@@ -262,7 +262,7 @@ void fileInit() {
   nBalls = v_balls.size();
   nSprings = v_springs.size();
 
-  nTime = (int) tmax/dt;
+  //  nTime = (int) tmax/dt;
   nTime = nTime/ts + 1;
 
   nTime = (int) nSteps/ts;
