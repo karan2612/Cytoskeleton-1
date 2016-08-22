@@ -11,10 +11,10 @@ using namespace std;
   Control Box
  *************/
 
-int nSteps = 35000;
-float tmax = 50; //time absolute stop
+int nSteps = 5000000;
+//float tmax = 50; //time absolute stop
 float dt = 0.001; //time step physics
-int ts = 200;      //time step rendering
+int ts = 20000;      //time step rendering
 
 int _nSys = 2;  //side length is Twice this #
 int _nSpectrin = 3; //number of spectrin Springs between each actin
