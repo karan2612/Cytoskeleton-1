@@ -1,7 +1,11 @@
 /*
   This file contains the following Initialization functions
     meshInit()
+    springInit()
+    elemInit()
+    edgeInit()
     spectrinInit()
+
     fileInit()
     fileClose()
     initPID()
@@ -130,6 +134,45 @@ void elemInit() {
   }
 
 }
+
+
+/* Build Edges, same basic algorithm as initSprings */
+void edgeInit() {
+
+  int j;
+  int N = _nSys;
+  int n = 2*N;
+  for (int y=0; y<n; y++) {
+    for (int x=0; x<n; x++) {
+
+      j = n*y + x;
+
+      if (x != n-1) {
+	Edge e(j,j+1);
+	v_edges.push_back(e);
+      }
+
+      if (y == n-1) continue;
+      Edge e1(j, j+n);
+      v_edges.push_back(e1);
+
+      if (y%2 == 0) { /* y even */
+	if (x == 0) continue;
+	Edge e0(j, j+n - 1);
+	v_edges.push_back(e0);
+
+      } else { /* y odd */
+	if (x == n-1) continue;
+	Edge e0(j, j+n + 1);
+	v_edges.push_back(e0);
+      }
+      
+    }
+  }
+  /* still need to identify two adjacent elems!! */
+  cout << "edge init complete" << endl;
+}
+
 
 /*  int n = _nSpectrin; //new springs :: 1 should be identity */
 void spectrinInit(int n) {

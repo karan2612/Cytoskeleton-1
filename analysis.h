@@ -176,10 +176,14 @@ void sampleForce3D() {
 }
 
 
+// called once each render write
 void writeForceZ(FILE *f) {
 
   pair<float,float> out;
   out = doStats(statForce);
+
+  //temp: wish to measure number of time steps to be skipped
+  //show();
 
   float fz,z,zdev;
   z = Particle->r[2];
@@ -277,11 +281,7 @@ pair<float,float> doStats(vector<float> &v) {
   
   pair<float,float> out;
   int N = v.size();
-  /*  int buffer = 10; //
-  float percent = buffer / (float)N;
-  cout << "throwing out first " << percent 
-       << "% of force time steps for equlibrium" << endl;
-  */
+
   //calc mean
   float sum, mean, dev;
   sum = 0;
@@ -309,21 +309,15 @@ pair<float,float> doStats(vector<float> &v) {
 
 
 void show() {
-  cout << "showing..." << endl;
+  //  cout << "showing..." << endl;
 
+  int N = statForce.size();
+  cout << N << endl;
+  for (int j=0; j<N;j++) {
+    cout << statForce[j] << endl;
+  }
+  cout << endl;
+  getc(stdin);
   int n = v_balls.size();
 
-  Ball* b;
-  for (int i=0; i<n; i++) {
-    b = &v_balls.at(i);
-
-    float m; //magnitutde
-    for(int j=0; j<3; j++) {
-      m += b->F[i] * b->F[i];
-    }
-    m = sqrt(m);    
-    cout << m << endl;
-  }
-
-  //  getc(stdin);
 }

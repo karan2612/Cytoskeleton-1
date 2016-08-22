@@ -43,7 +43,7 @@ void physics() {
   //  while (T<tmax) {
   while (t < nSteps) {
 
-    timeStep();
+    timeStep(t);
     t++;
     T += dt;
 
@@ -65,8 +65,8 @@ void physics() {
 }
 
 
-/* Everything here should be called once per time step*/
-void timeStep() {
+/* Everything here called once per Physics time step */
+void timeStep(int t) {
 
   size_t N = nBalls;
 
@@ -81,7 +81,7 @@ void timeStep() {
   /* Tally Forces */
   ForceSprings();
   SurfaceForce();
-  //  ParticleInteraction();
+  ParticleInteraction();
 
   /* Update Particles */
   for (size_t j=0; j<N; j++) {
@@ -91,6 +91,7 @@ void timeStep() {
     updateBrownian(v_balls[j]); 
   }
   
+  if (t % ts < 10) return;
   sampleForceZ();
 
 }
