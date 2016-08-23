@@ -187,7 +187,7 @@ double LJforce(double r, double d) {
   if (1/p < 0.05) 
     cout << "Warning: LJ Singularity from small r" << endl;
 
-  p = pow(p,6);
+  p = _pow(p,6);
   F =  e /r * p * (p - 1);
 
   return F;

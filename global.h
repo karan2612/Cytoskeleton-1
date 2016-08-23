@@ -11,7 +11,11 @@ using namespace std;
   Control Box
  *************/
 
+<<<<<<< HEAD
 int nSteps = 20000;
+=======
+int nSteps = 2000000;
+>>>>>>> 208bc206824c22af771fe0166dd278b7508aa08a
 //float tmax = 50; //time absolute stop
 float dt = 0.001; //time step physics
 int ts = 100;      //time step rendering
@@ -319,7 +323,7 @@ int edgeType(int i, int j, int N) {
   return -1;
 }
 
-double pow(double x, int n) {
+double _pow(double x, int n) {
 
   double ans = 1;
   for(int i=0; i<n; i++) {
