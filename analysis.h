@@ -167,25 +167,9 @@ float sampleContour() {
 void sampleForceZ() {
 
   float z = Particle->F[2];
-  statForce.push_back(z);
-}
+  statForce.push_back(z); 
 
-
-/* Samples Force at every Physics step */
-void sampleForce3D() {
-
-  float F=0, Fi;
-  for (int i=0; i<3; i++) {
-    Fi = Particle->F[i];
-    //    cout << Fi << endl;
-    forceST.at(i).push_back(Fi);
-    
-    F += Fi * Fi;
-  }
-  F = sqrt(F);
-  //    cout << " total force " << F 
-  //         << "\n" << endl;
-
+  //maybe this needs to be normalized by the number of interacting spectrin particles! 
 }
 
 
@@ -214,6 +198,23 @@ void writeForceZ(FILE *f) {
 
 }
 
+
+/* Samples Force at every Physics step */
+void sampleForce3D() {
+
+  float F=0, Fi;
+  for (int i=0; i<3; i++) {
+    Fi = Particle->F[i];
+    //    cout << Fi << endl;
+    forceST.at(i).push_back(Fi);
+    
+    F += Fi * Fi;
+  }
+  F = sqrt(F);
+  //    cout << " total force " << F 
+  //         << "\n" << endl;
+
+}
 
 /* writes F3 for each time step to file f5 part.txt */
 void writeForce3D() {
