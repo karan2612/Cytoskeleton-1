@@ -4,8 +4,8 @@
     normBall(Ball*, Ball*)
     magForce(Ball*)
 
-    forceSprings()
-    surfaceForce()
+    ForceSprings()
+    SurfaceForce()
     updateBrownian(Ball &)
     updatePosition(all &)
     LJforce(r, sig)

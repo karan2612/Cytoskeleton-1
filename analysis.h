@@ -1,10 +1,25 @@
 /*
   This file contains the following Analysis functions
+
     writeBalls()
     writeSprings()
+
     measureEdge()
     measureSpringEnergy()
+
     measureContour()
+    sampleContour() 
+
+    **onParticle**
+    sampleForceZ()  
+    sampleForce3D()
+    writeForceZ() 
+    writeForce3D() 
+    integrateWrappingEnergy()
+
+    f getDev(vector<f> &)
+    p<f,f> doStats(v<F> &)
+
     show()
  */
 
@@ -75,16 +90,11 @@ void measureEdge(FILE* f) {
   for (size_t j=0; j<N; j++) {
     b = &v_balls.at(j);
     if (b->edgeType == 1) {
-      //cout << b->getForce() << endl;
       F = b->getForce();
       fprintf(f, "%f ", F);
-      //hmmm there's probably a c++ way to do this
-      //      f << F;
     }
   }
 
-  //  getc(stdin);
-  //  cout << endl;
   fprintf(f, "\n");
 }
 
@@ -102,10 +112,13 @@ void measureSpringEnergy() {
   }
 
   //should I normalize this?
+
   //  cout << E << endl;
+  //  return E;
+  //  oder, schreiben zu filen
 }
 
-// to be retired??
+
 /* writes all the contours to file, at a given t */
 void measureContour(FILE *f) {
 
@@ -122,16 +135,13 @@ void measureContour(FILE *f) {
     s = &v_springs.at(j);
     C += s->getLength();
 
-    //    cout << j << endl;
     if (j == 0) continue;
     if ((j+1) % n == 0) {
-      //cout << C << endl;
       fprintf(f, "%f ", C);
-
       C = 0;
     }
   }
-  //cout << endl;
+
   fprintf(f,"\n");
 }
 
@@ -152,6 +162,8 @@ float sampleContour() {
   return C;
 }
 
+
+/* fills Force vector for analysis */
 void sampleForceZ() {
 
   float z = Particle->F[2];
@@ -171,30 +183,30 @@ void sampleForce3D() {
     F += Fi * Fi;
   }
   F = sqrt(F);
+  //    cout << " total force " << F 
+  //         << "\n" << endl;
 
-  //    cout << " total force " << F << endl;
-  //    cout << endl;
 }
 
 
-// called once each render write
+/* called between n sample steps
+   computes mean+dev Fz for each z
+   stores in vec for Energy integration
+   and writes to file */
 void writeForceZ(FILE *f) {
 
   pair<float,float> out;
   out = doStats(statForce);
 
-  //temp: wish to measure number of time steps to be skipped
   //show();
 
   float fz,z,zdev;
   z = Particle->r[2];
   fz = out.first;
   zdev = out.second;
-  //  cout << z << " " << fz << " " << zdev << endl;
 
   fprintf(f,"%f %f %f \n",-z,fz,zdev);
   statForce.clear();
-
 
   // pass to Energy integrator
   pair<float,float> in(z,fz);
@@ -203,12 +215,11 @@ void writeForceZ(FILE *f) {
 }
 
 
-/* writes F3 at each time step to file f5 part.txt */
+/* writes F3 for each time step to file f5 part.txt */
 void writeForce3D() {
   
   int S = forceST.size();
   int T = forceST[0].size();
-  //  cout << S << " " << T << endl;
 
   double F[3];
   double fx, fy, fz;
@@ -228,7 +239,6 @@ void writeForce3D() {
       Ft[j] += forceST[j].at(t);
     }
     Ft[j] = Ft[j] / T;
-    //    cout << Ft[j] << endl;
   }
 
 }
@@ -288,12 +298,9 @@ pair<float,float> doStats(vector<float> &v) {
   float sum, mean, dev;
   sum = 0;
   for (int j=0; j < N; j++) {
-    //if (j < buffer) continue;
-    
     sum += v.at(j);
   }
   mean = sum / N;
-  //  mean = sum / (N - buffer);
 
   //calc stdev
   sum = 0;

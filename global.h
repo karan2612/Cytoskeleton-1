@@ -16,8 +16,8 @@ int nSteps = 20000;
 float dt = 0.001; //time step physics
 int ts = 100;      //time step rendering
 
-int _nSys = 2;  //side length is Twice this #
-int _nSpectrin = 3; //number of spectrin Springs between each actin
+int _nSys = 3;  //side length is Twice this #
+int _nSpectrin = 10; //number of spectrin Springs between each actin
 double _lActin = 1.2; //initial length between Actin
 double _Contour = 2.5 * _lActin;
 float _sigma = 0.1; // for now
@@ -28,12 +28,11 @@ bool _msd = false;
 float msd = 0;
 double _k = 20; 
 double _m = 1;
+double _gamma = 1;
 
 
 /* Class def */
 class Ball {
-
-private:
 
 public:
   Ball (double, double, double); // constructor
