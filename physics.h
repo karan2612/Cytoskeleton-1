@@ -145,10 +145,10 @@ void SurfaceForce() {
 void updateBrownian(Ball &b) {
 
   double D = 0.01;
-  double m = b.m;
+  double g = _gamma;
 
   for (int i=0; i<3; i++) {
-    b.r[i] += b.F[i]/m * dt;
+    b.r[i] += b.F[i]/g * dt;
     b.r[i] += sqrt(2*D*dt)*randi.randNorm(0,1); 
   }
 
@@ -158,7 +158,7 @@ void updatePosition(Ball &b) {
 
   double a[3];
   double m = b.m;
-  //  cout << b.F[2] << endl;
+
   for (int i=0; i<3; i++) {
     a[i] = b.F[i]/m;
 
@@ -167,6 +167,9 @@ void updatePosition(Ball &b) {
   }
 }
 
+
+/* computes magnitude LJ force
+   for origin separation r, and particle thickness (sum of radii) d*/
 double LJforce(double r, double d) {
 
   /* r_min : F = 0, truncate potential
@@ -175,7 +178,6 @@ double LJforce(double r, double d) {
 
   double F, e, m, p;
   e = 0.01;
-  //m = 0.45; 
   m = 1.1225 * _sigma;
   r = r - d + _sigma;
 
@@ -202,8 +204,8 @@ double zSurface(double x, double y) {
 }
 
 
+/* played at each Physics step */
 void ParticleInteraction() {
-  //cout << " considering Particle interactions.." << endl;
 
   if (!Particle) {
     cout << "particle not initialized!" << endl;
@@ -222,9 +224,6 @@ void ParticleInteraction() {
   for (int j=0; j<N; j++) {
     
     b = & v_balls.at(j);
-
-    //
-    //if (b->pid == 0) continue;
 
     r = distBall(b, Particle);
     nm = normBall(b,Particle); // points b->P
@@ -247,25 +246,13 @@ void ParticleInteraction() {
 
       d = (_sigma/2) + radius; // R_part + R_interactant
       F = LJforce(r,d);
-      //      cout << F << endl;
 
       for (int i=0; i<3; i++) {
 	b->F[i]        -= F *  nm[i];
 	Particle->F[i] += F *  nm[i];
-
-       	//cout << nm[i] << endl;
       }
 
-      //investigate normals
-      float rt = sqrt( nm[0]*nm[0] + nm[1]*nm[1] );
-      float zt = nm[2];
-      float tan= zt/rt;
-      //      cout << tan << endl;
-      //      cout << endl;      
     }
 
-  }   
-
-  //end of interactant loop
-
+  } //end of interactant loop  
 }

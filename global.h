@@ -11,11 +11,7 @@ using namespace std;
   Control Box
  *************/
 
-<<<<<<< HEAD
 int nSteps = 20000;
-=======
-int nSteps = 2000000;
->>>>>>> 208bc206824c22af771fe0166dd278b7508aa08a
 //float tmax = 50; //time absolute stop
 float dt = 0.001; //time step physics
 int ts = 100;      //time step rendering
@@ -110,7 +106,6 @@ vector< vector<float> > forceST(3);
 vector< pair<float,float> > forceTime; //(z,Fz)_t
 
 void init();
-void hexInit();
 void meshInit();
 void springInit();
 void spectrinInit(int);
@@ -161,6 +156,7 @@ Ball::Ball (double x, double y, double z) {
     v[i]=0;
     F[i]=0;
   }
+
   r[0] = x;
   r[1] = y;
   r[2] = z;
@@ -172,28 +168,6 @@ Ball::Ball (double x, double y, double z) {
   m = _m;
 }
 
-Ball::Ball (double a, double b, int hex) {
-
-  double x,y; 
-  if (!hex) {
-
-    Ball(a, b, 0);//does this double init?
-    cout << " hex logic Warning!" << endl;
-  } else {
-    x = a * cos(b);
-    y = a * sin(b);
-
-    r[0] = x;
-    r[1] = y;
-    r[2] = 0;
-  }
-
-  idx = v_balls.size();
-  pid = 1;
-  isEdge = false;
-
-  m = _m;
-}
 
 /* returns magnitude of Force */
 double Ball::getForce() {

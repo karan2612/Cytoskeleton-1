@@ -159,6 +159,7 @@ void sampleForceZ() {
 }
 
 
+/* Samples Force at every Physics step */
 void sampleForce3D() {
 
   float F=0, Fi;
@@ -202,6 +203,7 @@ void writeForceZ(FILE *f) {
 }
 
 
+/* writes F3 at each time step to file f5 part.txt */
 void writeForce3D() {
   
   int S = forceST.size();

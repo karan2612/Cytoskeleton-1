@@ -10,7 +10,6 @@ int main() {
   init();
 
   physics();
-  writeForce3D();
 
   filesClose();
   return 0;
@@ -61,6 +60,8 @@ void physics() {
   cout << "   final system time : " << T << endl;
   
   integrateWrappingEnergy();
+  //  writeForce3D();
+
   cout << " finished physics.." << endl;
 }
 
