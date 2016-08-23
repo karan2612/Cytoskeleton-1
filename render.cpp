@@ -1,7 +1,6 @@
 #include "gr.h"
 #include "gr3.h"
 
-
 #include "stdio.h"
 
 #include <iostream>
@@ -10,7 +9,12 @@
 
 using namespace std;
 
-bool _mov = false;
+/* User Controls */
+bool _mov = false;    //writes movie to file
+bool _tracer = false; //follows origin
+bool _cut = false;    //cuts animation length 
+int _tcut = 150;      //  after _tcut frames
+/*~~~~~~~~~~~~~~~*/
 
 int main() {
 
@@ -28,11 +32,6 @@ int main() {
   X = 3*N;
   cout << T << " " << X << " " << N << endl;
   float in[T][X];
-  //float *in = new float[T][X];
-  /*
-    new allocates to the heap, while float[][] does stack, which got overflown
-    make an vector<vector> bc you don't need one large chunk of memory
-  */
   float colors[X];  
   float radii[N];
   float *positions;
@@ -67,9 +66,13 @@ int main() {
     }
 
   }
-  colors[0] = 1;
-  colors[1] = 1;
-  colors[2] = 0;
+
+  /* toggle to turn Ball 0 yellow */
+  if (_tracer) {
+    colors[0] = 1;
+    colors[1] = 1;
+    colors[2] = 0;
+  }
 
   // position
   for(int t=0; t<T; t++) {
@@ -79,6 +82,7 @@ int main() {
     }
   }
   cout << " finished reading balls" << endl;
+
 
   /* Read in Springs */
   ifstream dataSprings("springs.dat", ios::in);
@@ -129,7 +133,7 @@ int main() {
   cout << "Begin looping.. " << endl;
   if(_mov) setenv("GKS_WSTYPE", "mov", 1); 
   int tend = T-1;
-  //  tend = 150;
+  if(_cut) tend = _tcut;
   for(int t=0; t<tend; t++) {
 
     positions = in[t];
@@ -143,8 +147,8 @@ int main() {
 
     gr_clearws();
     gr_setwsviewport(0, 0.12, 0, 0.12); // in units m
-    gr_setviewport(0, 1, 0, 1);       // relative to Work Station
-    //gr_inqdspsize();//
+    gr_setviewport(0, 1, 0, 1);         // relative to Work Station
+
     gr3_drawimage(0, 1, 0, 1, 800, 800, GR3_DRAWABLE_GKS);
     gr_updatews();    
 
