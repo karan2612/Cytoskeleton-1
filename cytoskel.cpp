@@ -119,7 +119,7 @@ void initParticle() {
   double buffer;
   
   c = -0.2; //wrapping fraction
-  R = 1.1 * _lActin; //input radius
+  R = _pRadius;
   z = R * (1-c);
 
   //  Particle = new Ball(0,0,z);

@@ -19,6 +19,7 @@ int ts = 1000;      //time step rendering
 int _nSys = 3;  //side length is Twice this #
 int _nSpectrin = 10; //number of spectrin Springs between each actin
 double _lActin = 1.2; //initial length between Actin
+double _pRadius = 1.1 * _lActin; //particle radius
 double _Contour = 2.5 * _lActin;
 float _sigma = 0.1; // for now
 float _dz = 0.013;
