@@ -32,24 +32,24 @@ void physics() {
 
   /* Defined in Header:
      tmax - (float) absolute stop time
-     dt - (float) time step physics
-     ts - (int) time step output */
+     _dt - (float) time step physics
+     _ts - (int) time step output */
 
   cout << " beginning physics.." << endl;
 
   float T=0; //elapsed time
   int t=0, t_count=0;
   //  while (T<tmax) {
-  while (t < nSteps) {
+  while (t < _nSteps) {
 
     timeStep(t);
     t++;
-    T += dt;
+    T += _dt;
 
     //init equilibriation
-    if (t < 500) continue;
+    if (t < _tEquil) continue;
 
-    if (t % ts == 0) { 
+    if (t % _ts == 0) { 
 
       t_count++;
       doAnalysis();
@@ -94,7 +94,7 @@ void timeStep(int t) {
     updateBrownian(v_balls[j]); 
   }
   
-  if (t % ts < 10) return;
+  if (t % _ts < _tEqSamp) return;
   sampleForceZ();
 
 }
@@ -104,23 +104,11 @@ void doAnalysis() {
   /* make measurements */
   sampleForce3D();
   writeForceZ(f6); //mean Fz discovered in here!
-  moveParticle();
+
+  Particle->r[2] -= _dz; //moves particle
 
   /* for rendering */
   writeBalls(f1);
   writeSprings(f2);
 }
-
-
-/* somehow need to equilibriate system before this kicks in.
-   maybe it would be useful to make global the ellapsed time and step time, 
-   for easier access by skip logic
-*/
-void moveParticle() {
-
-  Particle->r[2] -= _dz;
-  //Particle->r[2] += _dz; //moving up
-
-}
-
  

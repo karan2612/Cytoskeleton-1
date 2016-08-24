@@ -282,10 +282,10 @@ void fileInit() {
   //  nTime = (int) tmax/dt;
   //nTime = nTime/ts + 1;
 
-  nTime = (int) nSteps/ts;
+  nTime = (int) _nSteps/ts;
   cout << "   predicted time steps: " << nTime << endl;
   cout << "   physics steps per time step: " << ts << endl;
-  cout << "   TOTAL differential steps: " << nSteps << endl;
+  cout << "   TOTAL differential steps: " << _nSteps << endl;
 
   fprintf(f1, "%i\n" , nTime);
   fprintf(f1, "%i\n\n" , nBalls);

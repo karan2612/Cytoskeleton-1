@@ -148,8 +148,8 @@ void updateBrownian(Ball &b) {
   double g = _gamma;
 
   for (int i=0; i<3; i++) {
-    b.r[i] += b.F[i]/g * dt;
-    b.r[i] += sqrt(2*D*dt)*randi.randNorm(0,1); 
+    b.r[i] += b.F[i]/g * _dt;
+    b.r[i] += sqrt(2*D*_dt)*randi.randNorm(0,1); 
   }
 
 }
@@ -162,8 +162,8 @@ void updatePosition(Ball &b) {
   for (int i=0; i<3; i++) {
     a[i] = b.F[i]/m;
 
-    b.v[i] += a[i] * dt;
-    b.r[i] += b.v[i] * dt;
+    b.v[i] += a[i] * _dt;
+    b.r[i] += b.v[i] * _dt;
   }
 }
 
