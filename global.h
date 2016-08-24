@@ -37,8 +37,8 @@ class Ball {
 
 public:
   Ball (double, double, double); // constructor
-  Ball (double, double, int); //polar coordinate constructor
-  double r[3],v[3],F[3];
+  Ball (double, double, int); //polar coordinate constructor (obselete)
+  double r[3],v[3],F[3]; //position, velocity, force (all 3 arrays)
 
   double m,R; //mass, radius
   int idx, pid; //index in vector, particle id as defined in initPID()
@@ -55,7 +55,7 @@ public:
 
   int n1,n2; //nodes: index the balls attached to this brings
 
-  double L, k, m;  //length, spring constant, mass
+  double L, k;  //length, spring constant, mass
   double eql; //equilibrium length (F = 0)
 
   double getLength();
@@ -194,18 +194,17 @@ Spring::Spring (int b1, int b2) {
   L = getLength();
   eql = feq * L; 
  
-  m = _m;
   k = _k;
 }
 
 /* determines a spring's lengths from its two nodes */
 double Spring::getLength(){
 
-  double L = 0;
-  double dr[3];
-  
   Ball a = v_balls[n1];
   Ball b = v_balls[n2];
+
+  double L = 0;
+  double dr[3];
 
   for (int i=0; i<3; i++) {
     dr[i] = b.r[i] - a.r[i];

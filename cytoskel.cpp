@@ -37,7 +37,7 @@ void physics() {
 
   cout << " beginning physics.." << endl;
 
-  float T=0; 
+  float T=0; //elapsed time
   int t=0, t_count=0;
   //  while (T<tmax) {
   while (t < nSteps) {
@@ -46,7 +46,9 @@ void physics() {
     t++;
     T += dt;
 
+    //init equilibriation
     if (t < 500) continue;
+
     if (t % ts == 0) { 
 
       t_count++;
@@ -109,24 +111,6 @@ void doAnalysis() {
   writeSprings(f2);
 }
 
-
-void initParticle() {
-
-  /* Let wrapping fraction c (0,2)
-     then z = c * R (if z = 0, c=0, at psi=0)
-   */
-  double z,c,R;
-  double buffer;
-  
-  c = -0.2; //wrapping fraction
-  R = _pRadius;
-  z = R * (1-c);
-
-  //  Particle = new Ball(0,0,z);
-  Particle = new Ball(0,0,z);
-  Particle->R = R;
-
-}
 
 /* somehow need to equilibriate system before this kicks in.
    maybe it would be useful to make global the ellapsed time and step time, 

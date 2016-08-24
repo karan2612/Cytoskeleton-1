@@ -1,16 +1,15 @@
 /*
   This file contains the following Initialization functions
     meshInit()
-    springInit()
-    elemInit()
-    edgeInit()
     spectrinInit()
+    initParticle()
+    *elemInit()
+    *edgeInit()
 
     fileInit()
     fileClose()
     initPID()
     randInit()
-    initParticle()
 
   and the retired functions as well
     hexInit()
@@ -47,8 +46,8 @@ void meshInit() {
       }
 
       v_balls.push_back(*b);
-    }
-  }
+    } //rows done.
+  } //column and rows done
 
   springInit();
 
@@ -65,7 +64,7 @@ void springInit() {
   for (int y=0; y<n; y++) {
     for (int x=0; x<n; x++) {
 
-      j = n*y + x;
+      j = n*y + x; //computes ball index in vector
 
       if (x != n-1) {
 	Spring s(j,j+1);
@@ -173,12 +172,11 @@ void edgeInit() {
   cout << "edge init complete" << endl;
 }
 
-
-/*  int n = _nSpectrin; //new springs :: 1 should be identity */
+/* Mesh is Done. 
+   For each protoSpring: Create and replace with Spectrin 'Dagger' */
 void spectrinInit(int n) {
 
   //makes a copy
-  //vector<Spring> vs = v_springs;
   int N = v_springs.size();
   if (N < 1) {
     cout << "Error: spring vector is empty!" << endl;
@@ -210,7 +208,7 @@ void spectrinInit(int n) {
     for (int i=0; i<2; i++) {
       r1[i] = b1->r[i];
       r2[i] = b2->r[i];
-      dr[i] = (r2[i] - r1[i]) / n;
+      dr[i] = (r2[i] - r1[i]) / n; //slice into chunks
     }
 
     //create n-1 new balls
@@ -222,7 +220,7 @@ void spectrinInit(int n) {
       z = -h + h/a * abs( a - (i*A/n) );
 
       Ball b(x,y,z);
-      b.pid = 0;
+      b.pid = 0; //denotes spectrin
       v_balls.push_back(b);
     }
 
@@ -236,7 +234,7 @@ void spectrinInit(int n) {
     }
     newSpring_v.push_back( Spring(k, j2) );
 
-  }
+  }//Springs done.
 
   //haben Sie memory leak??
   v_springs = newSpring_v;
@@ -244,6 +242,25 @@ void spectrinInit(int n) {
   cout << "   spectrin spring complete " << n << endl;
        
 }
+
+
+void initParticle() {
+
+  /* Let wrapping fraction c (0,2)
+     then z = c * R (if z = 0, c=0, at psi=0)
+   */
+  double z,c,R;
+  
+  c = -0.2; //wrapping fraction (- to place above membrane)
+  R = _pRadius;
+  z = R * (1-c);
+
+  //  Particle = new Ball(0,0,-z);
+  Particle = new Ball(0,0,z);
+  Particle->R = R;
+
+}
+
 
 void fileInit() {
 
@@ -263,7 +280,7 @@ void fileInit() {
   nSprings = v_springs.size();
 
   //  nTime = (int) tmax/dt;
-  nTime = nTime/ts + 1;
+  //nTime = nTime/ts + 1;
 
   nTime = (int) nSteps/ts;
   cout << "   predicted time steps: " << nTime << endl;
