@@ -35,6 +35,7 @@ float distBall(Ball *b1, Ball *b2) {
 //returns norm from origin of a to origin of b
 vector<float> normBall(Ball *a, Ball *b) {
 
+  /* get distance */
   float u[3],v[3],n[3];
   for (int i=0;i<3;i++) {
     u[i] = a->r[i];
@@ -43,14 +44,14 @@ vector<float> normBall(Ball *a, Ball *b) {
     n[i] = v[i] - u[i];
   }
 
-  float m=0; //magnitutde
+  /* get magnitude */
+  float m=0;
   for(int j=0; j<3; j++) {
     m += n[j]*n[j];
   }
   m = sqrt(m);
-  /* I could make a subroutine,
-     but that would pass an array and return a double */
 
+  /* create norm */
   vector<float> norm = vector<float>(3);
   for(int j=0; j<3; j++) {
     norm[j] = n[j]/m;
@@ -59,6 +60,7 @@ vector<float> normBall(Ball *a, Ball *b) {
   return norm;
 }
 
+/* have fx fy fz, wish to calc magnitude */
 double magForce(Ball *b) {
 
   double F=0, f=0;
@@ -83,6 +85,7 @@ void ForceSprings() {
   size_t N = v_springs.size();
   for (size_t j=0; j<N; j++) {
 
+    /* computes force */
     spr = &v_springs[j];
 
     L = spr->getLength();
@@ -90,6 +93,7 @@ void ForceSprings() {
     K = spr->k;
     F = - K * (L - X);
 
+    /* assigns force to balls */
     j1 = spr->n1;
     j2 = spr->n2;
     b1 = &v_balls[j1];
@@ -117,6 +121,7 @@ void SurfaceForce() {
     b = & v_balls[j];
     isActin = b->pid; 
 
+    //if (isActin > 0) { //is equivalent
     if (isActin) {
       b->r[2] = zSurface(b->r[0],
 			 b->r[1]); //better way?
@@ -136,7 +141,7 @@ void SurfaceForce() {
     }
 
     r = abs(z - z0);
-    F = LJforce(r,0.1); //hardcode surface sigma
+    F = LJforce(r,_sigma); 
     b->F[2] += -F; //sign?
   }
 }
@@ -144,14 +149,14 @@ void SurfaceForce() {
 
 void updateBrownian(Ball &b) {
 
-  double D = 0.01;
+  //double D = 0.01;
+  double D = _D;
   double g = _gamma;
 
   for (int i=0; i<3; i++) {
     b.r[i] += b.F[i]/g * _dt;
     b.r[i] += sqrt(2*D*_dt)*randi.randNorm(0,1); 
   }
-
 }
 
 void updatePosition(Ball &b) {
@@ -168,7 +173,7 @@ void updatePosition(Ball &b) {
 }
 
 
-/* computes magnitude LJ force
+/* computes MAGNITUDE of LJ force
    for origin separation r, and particle thickness (sum of radii) d*/
 double LJforce(double r, double d) {
 
@@ -177,8 +182,8 @@ double LJforce(double r, double d) {
      but it should be the sum of radii d = (a+b) */
 
   double F, e, m, p;
-  e = 0.01;
-  m = 1.1225 * _sigma;
+  e = 0.01; //epsilon
+  m = 1.1225 * _sigma; //r_min
   r = r - d + _sigma;
 
   if (r > m) return 0; //yes, U(r') = 0
@@ -190,7 +195,7 @@ double LJforce(double r, double d) {
     cout << "Warning: LJ Singularity from small r" << endl;
 
   p = _pow(p,6);
-  F =  e /r * p * (p - 1);
+  F = 12.*(e /r)*p*(p - 1);
 
   return F;
 }

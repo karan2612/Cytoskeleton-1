@@ -30,6 +30,7 @@ float msd = 0;
 double _k = 20; 
 double _m = 1;
 double _gamma = 1;
+double _D = 0.01;
 
 
 /* Class def */
