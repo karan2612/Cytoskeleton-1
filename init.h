@@ -280,11 +280,11 @@ void fileInit() {
   nSprings = v_springs.size();
 
   //  nTime = (int) tmax/dt;
-  //nTime = nTime/ts + 1;
+  //nTime = nTime/_ts + 1;
 
-  nTime = (int) _nSteps/ts;
+  nTime = (int) _nSteps/_ts;
   cout << "   predicted time steps: " << nTime << endl;
-  cout << "   physics steps per time step: " << ts << endl;
+  cout << "   physics steps per time step: " << _ts << endl;
   cout << "   TOTAL differential steps: " << _nSteps << endl;
 
   fprintf(f1, "%i\n" , nTime);
