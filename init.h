@@ -89,7 +89,7 @@ void springInit() {
       
     }
   }
-  cout << "proto-spring complete" << endl;
+  cout << "   proto-spring complete" << endl;
 }
 
 
