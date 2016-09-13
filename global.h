@@ -4,17 +4,22 @@
 #include "MersenneTwister.h"
 
 #define PI 3.14159265
-
 using namespace std;
 
 /**************
   Control Box
  *************/
+int _nSteps = 30000;
+int _ts = 100;      //time step rendering
+float _dt = 0.001;  //time step physics
 
 int nSteps = 30000;
 //float tmax = 50; //time absolute stop
 float dt = 0.001; //time step physics
 int ts = 100;      //time step rendering
+
+int _tEquil = 500; //time to delay before doing analysis
+int _tEqSamp = 50; //time to delay before making measurements
 
 int _nSys = 3;  //side length is Twice this #
 int _nSpectrin = 10; //number of spectrin Springs between each actin
@@ -30,6 +35,7 @@ float msd = 0;
 double _k = 20; 
 double _m = 1;
 double _gamma = 1;
+double _D = 0.01;
 
 
 /* Class def */
@@ -37,8 +43,8 @@ class Ball {
 
 public:
   Ball (double, double, double); // constructor
-  Ball (double, double, int); //polar coordinate constructor
-  double r[3],v[3],F[3];
+  Ball (double, double, int); //polar coordinate constructor (obselete)
+  double r[3],v[3],F[3]; //position, velocity, force (all 3 arrays)
 
   double m,R; //mass, radius
   int idx, pid; //index in vector, particle id as defined in initPID()
@@ -55,7 +61,7 @@ public:
 
   int n1,n2; //nodes: index the balls attached to this brings
 
-  double L, k, m;  //length, spring constant, mass
+  double L, k;  //length, spring constant, mass
   double eql; //equilibrium length (F = 0)
 
   double getLength();
@@ -194,18 +200,17 @@ Spring::Spring (int b1, int b2) {
   L = getLength();
   eql = feq * L; 
  
-  m = _m;
   k = _k;
 }
 
 /* determines a spring's lengths from its two nodes */
 double Spring::getLength(){
 
-  double L = 0;
-  double dr[3];
-  
   Ball a = v_balls[n1];
   Ball b = v_balls[n2];
+
+  double L = 0;
+  double dr[3];
 
   for (int i=0; i<3; i++) {
     dr[i] = b.r[i] - a.r[i];
