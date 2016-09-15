@@ -16,8 +16,8 @@ float _dt = 0.001;  //time step physics
 int nSteps = 30000;
 //float tmax = 50; //time absolute stop
 float dt = 0.001; //time step physics
-int ts = 100;      //time step rendering
 
+int _ts = 100;      //time step rendering
 int _tEquil = 500; //time to delay before doing analysis
 int _tEqSamp = 50; //time to delay before making measurements
 

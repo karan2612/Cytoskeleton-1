@@ -26,9 +26,9 @@ void process(char* in, std::ifstream &fin) {
     int x;
     fin >> x; //gets data
  
-    cout << _tEqSamp;
-    _tEqSamp = x;
-    cout << " fate changed! " << _tEqSamp << endl;
+    cout << _ts;
+    _ts = x;
+    cout << " fate changed! " << _ts << endl;
   }
 
   if (strcmp(in, "Radius") == 0) {
