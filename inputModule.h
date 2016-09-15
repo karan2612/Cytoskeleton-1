@@ -19,16 +19,28 @@ void process(char* in, std::ifstream &fin) {
     cout << " fate changed! " << _nSys << endl;
   }
 
-  if (strcmp(in, "EQSamp") == 0) {
+  if (strcmp(in, "tSamp") == 0) {
 
     cout << "reading: " << in << endl;
 
     int x;
     fin >> x; //gets data
  
-    cout << _ts;
-    _ts = x;
-    cout << " fate changed! " << _ts << endl;
+    cout << _tSamp;
+    _tSamp = x;
+    cout << " fate changed! " << _tSamp << endl;
+  }
+
+  if (strcmp(in, "nStep") == 0) {
+
+    cout << "reading: " << in << endl;
+
+    int x;
+    fin >> x; //gets data
+ 
+    cout << _nSteps;
+    _nSteps = x;
+    cout << " fate changed! " << _nSteps << endl;
   }
 
   if (strcmp(in, "Radius") == 0) {
@@ -72,4 +84,7 @@ void readInput() {
   }
 
   infile.close();
+
+  //  cout << "recalculating time" << endl;
+  _tMax = _tEqGlobal + (_tSamp * _nSteps);
 }

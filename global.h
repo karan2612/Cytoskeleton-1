@@ -9,17 +9,15 @@ using namespace std;
 /**************
   Control Box
  *************/
-int _nSteps = 30000;
-int _ts = 100;      //time step rendering
+
+int _tEqGlobal = 500; //time to delay before doing analysis
+int _tEqLocal = 50; //time to delay before making measurements
+
 float _dt = 0.001;  //time step physics
 
-int nSteps = 30000;
-//float tmax = 50; //time absolute stop
-float dt = 0.001; //time step physics
-
-int _ts = 100;      //time step rendering
-int _tEquil = 500; //time to delay before doing analysis
-int _tEqSamp = 50; //time to delay before making measurements
+int _tSamp = 100;      //time pause rendering
+int _nSteps = 300;
+int _tMax = _tEqGlobal + (_tSamp * _nSteps);
 
 int _nSys = 3;  //side length is Twice this #
 int _nSpectrin = 10; //number of spectrin Springs between each actin

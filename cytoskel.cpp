@@ -38,23 +38,23 @@ void physics() {
   /* Defined in Header:
      tmax - (float) absolute stop time
      _dt - (float) time step physics
-     _ts - (int) time step output */
+     _tSamp - (int) time step output */
 
   cout << " beginning physics.." << endl;
 
   float T=0; //elapsed time
   int t=0, t_count=0;
   //  while (T<tmax) {
-  while (t < _nSteps) {
+  while (t < _tMax) {
 
     timeStep(t);
     t++;
     T += _dt;
 
     //init equilibriation
-    if (t < _tEquil) continue;
+    if (t < _tEqGlobal) continue;
 
-    if (t % _ts == 0) { 
+    if (t % _tSamp == 0) { 
 
       t_count++;
       doAnalysis();
@@ -63,7 +63,7 @@ void physics() {
     }
   }
 
-  cout << "   actual time steps: " << t_count << endl;
+  cout << "   rendered time steps: " << t_count << endl;
   cout << "   final system time : " << T << endl;
   
   integrateWrappingEnergy();
@@ -99,8 +99,9 @@ void timeStep(int t) {
     updateBrownian(v_balls[j]); 
   }
   
-  if (t % _ts < _tEqSamp) return;
-  sampleForceZ();
+  if ( (t % _tSamp) > _tEqLocal) {
+    sampleForceZ();
+  }
 
 }
 

@@ -279,13 +279,9 @@ void fileInit() {
   nBalls = v_balls.size();
   nSprings = v_springs.size();
 
-  //  nTime = (int) tmax/dt;
-  //nTime = nTime/_ts + 1;
-
-  nTime = (int) _nSteps/_ts;
-  cout << "   predicted time steps: " << nTime << endl;
-  cout << "   physics steps per time step: " << _ts << endl;
-  cout << "   TOTAL differential steps: " << _nSteps << endl;
+  cout << "   predicted time steps: " << _nSteps << endl;
+  cout << "   physics steps per render step time: " << _tSamp << endl;
+  cout << "   TOTAL differential steps: " << _tMax << endl;
 
   fprintf(f1, "%i\n" , nTime);
   fprintf(f1, "%i\n\n" , nBalls);
