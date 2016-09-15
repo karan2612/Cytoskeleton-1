@@ -3,6 +3,8 @@
 #include "physics.h"
 #include "analysis.h"
 
+#include "inputModule.h"
+
 int main() {
 
   cout << "hello world!" << endl;
@@ -16,6 +18,9 @@ int main() {
 }
 
 void init() {
+
+  readInput();
+  //getc(stdin);
 
   /* Build Cytoskeleton System */
   cout << " initializing system.." << endl;
