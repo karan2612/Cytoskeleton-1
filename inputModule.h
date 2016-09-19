@@ -55,6 +55,17 @@ void process(char* in, std::ifstream &fin) {
 
   }
 
+  if (strcmp(in, "Print") == 0) {
+
+    cout << "reading: " << in << endl;
+
+    bool p;
+    fin >> p;
+    _printTime = p;
+    cout << " fate changed! " << _printTime << endl;
+
+  }
+
   if (strcmp(in, "Zara") == 0) {
     cout << "true love" << endl;
   }
@@ -74,7 +85,7 @@ void readInput() {
     infile.open(fname);
   }
   */
-  infile.open("fooIN.txt");
+  infile.open("command.txt");
 
 
   while (infile >> data) {

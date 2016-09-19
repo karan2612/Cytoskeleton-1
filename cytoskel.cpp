@@ -59,7 +59,9 @@ void physics() {
       t_count++;
       doAnalysis();
 
-      cerr << t_count << "\r";
+      if (_printTime) {
+	cerr << t_count << "\r";
+      }
     }
   }
 

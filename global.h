@@ -26,6 +26,7 @@ double _pRadius = 1.1 * _lActin; //particle radius
 double _Contour = 2.5 * _lActin;
 float _sigma = 0.1; // for now
 float _dz = 0.013;
+bool _printTime = true;
 
 bool _msd = false;
 
