@@ -26,11 +26,11 @@ double _pRadius = 1.1 * _lActin; //particle radius
 double _Contour = 2.5 * _lActin;
 float _sigma = 0.1; // for now
 float _dz = 0.013;
+
 bool _printTime = true;
+bool _fileTag = false;
+string _tag = "";
 
-bool _msd = false;
-
-float msd = 0;
 double _k = 20; 
 double _m = 1;
 double _gamma = 1;

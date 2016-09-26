@@ -264,16 +264,25 @@ void initParticle() {
 
 void fileInit() {
 
-  cout << " initializing file.." << endl;
+  cout << " initializing files.." << endl;
 
   // is it ineffective to do all of these all the time?
+  
+
   f1 = fopen("balls.dat", "w");
   f2 = fopen("springs.dat", "w");
-  f3 = fopen("force.txt", "w");
-  f4 = fopen("contour.txt", "w");
-  f5 = fopen("part.txt", "w");
-  f6 = fopen("zForce.txt", "w");
-  f7 = fopen("WrappingEnergy.txt", "w");
+  //  f3 = fopen("force.txt", "w");
+  //  f4 = fopen("contour.txt", "w");
+  //  f5 = fopen("part.txt", "w");
+
+  char tag6[32] = "zForce.txt";
+  char tag7[32] = "WrappingEnergy.txt";
+
+  strcat(tag6, _tag.c_str());
+  strcat(tag7, _tag.c_str());
+
+  f6 = fopen(tag6, "w");
+  f7 = fopen(tag7, "w");
 
   /* Writes nTime, nBalls, and nSprings */
   nBalls = v_balls.size();

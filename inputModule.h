@@ -52,7 +52,6 @@ void process(char* in, std::ifstream &fin) {
     cout << _pRadius;
     _pRadius = r * _lActin;
     cout << " fate changed! " << _pRadius << endl;
-
   }
 
   if (strcmp(in, "Print") == 0) {
@@ -63,7 +62,16 @@ void process(char* in, std::ifstream &fin) {
     fin >> p;
     _printTime = p;
     cout << " fate changed! " << _printTime << endl;
+  }
 
+  if (strcmp(in, "Tag") == 0) {
+
+    cout << "reading: " << in << endl;
+   
+    fin >> _tag;
+    _fileTag = true;
+
+    cout << " fate changed! " << _tag << endl;
   }
 
   if (strcmp(in, "Zara") == 0) {
@@ -79,23 +87,14 @@ void readInput() {
 
   char data[100];
   ifstream infile; 
-  /*
-  if (!fname) {
-    cout << "loading default" << endl;
-    infile.open(fname);
-  }
-  */
+
   infile.open("command.txt");
-
-
   while (infile >> data) {
 
     process(data, infile);
-
   }
-
   infile.close();
 
-  //  cout << "recalculating time" << endl;
+  /* recalc time */
   _tMax = _tEqGlobal + (_tSamp * _nSteps);
 }
