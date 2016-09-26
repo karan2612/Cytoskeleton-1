@@ -302,11 +302,13 @@ void fileInit() {
 void filesClose() {
   fclose(f1);
   fclose(f2);
+  fclose(f6);
+  fclose(f7);
+  /*
   fclose(f3);
   fclose(f4);
   fclose(f5);
-  fclose(f6);
-  fclose(f7);
+  */
 
   cout << "files written." << endl;
 }

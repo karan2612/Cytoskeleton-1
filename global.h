@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <cstring>
 #include "MersenneTwister.h"
 
 #define PI 3.14159265
