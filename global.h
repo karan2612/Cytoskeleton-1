@@ -9,7 +9,7 @@ using namespace std;
 
 /**************
   Control Box
- *************/
+ **************/
 
 int _tEqGlobal = 500; //time to delay before doing analysis
 int _tEqLocal = 50; //time to delay before making measurements
@@ -26,11 +26,12 @@ double _lActin = 1.2; //initial length between Actin
 double _pRadius = 1.1 * _lActin; //particle radius
 double _Contour = 2.5 * _lActin;
 float _sigma = 0.1; // for now
-float _dz = 0.013;
+float _dz = -0.013;
 
 bool _printTime = true;
 bool _fileTag = false;
 string _tag = "";
+bool _sunrise = false;
 
 double _k = 20; 
 double _m = 1;
@@ -107,7 +108,7 @@ vector<Elem> v_elems;
 vector<Edge> v_edges;
 
 vector<float> conTime;
-vector<float> statForce;
+vector<float> fStats;
 vector< vector<float> > forceST(3);
 vector< pair<float,float> > forceTime; //(z,Fz)_t
 
@@ -152,7 +153,8 @@ void measureSpringEnergy();
 void measureContour(FILE*);
 void sampleForceZ();
 void sampleForce3D();
-void writeKaranXY(FILE*,FILE*);
+void show();
+//void writeKaranXY(FILE*,FILE*);
 
 /* function def */
 Ball::Ball (double x, double y, double z) {

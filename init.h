@@ -255,7 +255,14 @@ void initParticle() {
   R = _pRadius;
   z = R * (1-c);
 
-  //  Particle = new Ball(0,0,-z);
+  /* wish to implement boolean toggle that flips initial z and vz */
+  if (_sunrise) {
+    cout << "** swtiching particle direction **" << endl;
+
+    z = -2*z;
+    _dz = -_dz; //velocity stored as global differential
+  }
+
   Particle = new Ball(0,0,z);
   Particle->R = R;
 
@@ -267,7 +274,6 @@ void fileInit() {
   cout << " initializing files.." << endl;
 
   // is it ineffective to do all of these all the time?
-  
 
   f1 = fopen("balls.dat", "w");
   f2 = fopen("springs.dat", "w");
@@ -292,7 +298,7 @@ void fileInit() {
   cout << "   physics steps per render step time: " << _tSamp << endl;
   cout << "   TOTAL differential steps: " << _tMax << endl;
 
-  fprintf(f1, "%i\n" , nTime);
+  fprintf(f1, "%i\n" , _nSteps);
   fprintf(f1, "%i\n\n" , nBalls);
   fprintf(f2, "%i\n\n" , nSprings);
 
@@ -327,7 +333,6 @@ void initPID() {
 }
 
 void randInit() {
-
   cout << " initializing rand.." << endl;
   unsigned int saat = (unsigned int)time(0); 
   randi.seed(saat);
@@ -341,7 +346,6 @@ void sysConfig() {
   int N = v_balls.size();
   int j;
   for (j=0; j<N; j++) {
-
     v_balls[j].pid = 1;
     v_balls[j].isEdge = false;
   }

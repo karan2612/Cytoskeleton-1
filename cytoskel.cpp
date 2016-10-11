@@ -10,10 +10,9 @@ int main() {
   cout << "hello world!" << endl;
 
   init();
-
   physics();
-
   filesClose();
+
   return 0;
 }
 
@@ -100,23 +99,25 @@ void timeStep(int t) {
     //updatePosition(v_balls[j]); 
     updateBrownian(v_balls[j]); 
   }
-  
+
   if ( (t % _tSamp) > _tEqLocal) {
     sampleForceZ();
   }
 
 }
 
+/* this function is called once every (_tSamp) */
 void doAnalysis() {
  
   /* make measurements */
   sampleForce3D();
   writeForceZ(f6); //mean Fz discovered in here!
 
-  Particle->r[2] -= _dz; //moves particle
-
-  /* for rendering */
+  /* write for rendering */
   writeBalls(f1);
   writeSprings(f2);
+
+  /* move Particle */
+  Particle->r[2] += _dz; 
 }
  

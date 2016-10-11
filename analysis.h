@@ -167,9 +167,11 @@ float sampleContour() {
 void sampleForceZ() {
 
   float z = Particle->F[2];
-  statForce.push_back(z); 
+  //  cout << z << endl;
+  fStats.push_back(z); //stores Force statistics
 
-  //maybe this needs to be normalized by the number of interacting spectrin particles! 
+  //maybe this needs to be normalized 
+  //  by the number of interacting spectrin particles..
 }
 
 
@@ -180,9 +182,10 @@ void sampleForceZ() {
 void writeForceZ(FILE *f) {
 
   pair<float,float> out;
-  out = doStats(statForce);
 
-  //show();
+  out = doStats(fStats); //calculations Here
+
+  //  show();
 
   float fz,z,zdev;
   z = Particle->r[2];
@@ -190,7 +193,7 @@ void writeForceZ(FILE *f) {
   zdev = out.second;
 
   fprintf(f,"%f %f %f \n",-z,fz,zdev);
-  statForce.clear();
+  fStats.clear();
 
   // pass to Energy integrator
   pair<float,float> in(z,fz);
@@ -257,10 +260,11 @@ void integrateWrappingEnergy(){
     z  = forceTime[j].first;
     Fz = forceTime[j].second;
 
-    E += Fz * dz;
+    E += -(Fz * dz);
 
-    //write to file E(z)
+    /* write to file E(z) */
     fprintf(f7,"%.2f %f\n",-z,E);
+    // z flipped for visual effects...
   }
 
   
@@ -319,15 +323,14 @@ pair<float,float> doStats(vector<float> &v) {
 
 
 void show() {
-  //  cout << "showing..." << endl;
+  cout << "showing..." << endl;
 
-  int N = statForce.size();
+  int N = fStats.size();
   cout << N << endl;
   for (int j=0; j<N;j++) {
-    cout << statForce[j] << endl;
+    cout << fStats[j] << endl;
   }
-  cout << endl;
-  getc(stdin);
-  int n = v_balls.size();
+  cout << "done" << endl;
 
+  getc(stdin);
 }

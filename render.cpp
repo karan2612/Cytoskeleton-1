@@ -12,8 +12,9 @@ using namespace std;
 /* User Controls */
 bool _mov = false;    //writes movie to file
 bool _tracer = false; //follows origin
+
 bool _cut = false;    //cuts animation length 
-int _tcut = 150;      //  after _tcut frames
+int _tcut = 120;      //  after _tcut frames
 /*~~~~~~~~~~~~~~~*/
 
 int main() {
@@ -129,11 +130,18 @@ int main() {
   }
   cout << " finished reading springs" << endl;
 
+
   /* Animate Video */
-  cout << "Begin looping.. " << endl;
-  if(_mov) setenv("GKS_WSTYPE", "mov", 1); 
+  if(_mov) {
+    cout << "* Writing to .mov!" << endl;
+    setenv("GKS_WSTYPE", "mov", 1); 
+  }
+
   int tend = T-1;
   if(_cut) tend = _tcut;
+  cout << " projected tend:  " << tend << endl;
+
+  cout << "Begin looping.. " << endl;
   for(int t=0; t<tend; t++) {
 
     positions = in[t];
@@ -155,10 +163,10 @@ int main() {
     cerr << t << "\r";
   }
   cout << "finished loop" << endl;
+
   if (_mov) gr_emergencyclosegks();
-
   cout << "rendering complete! press any key <> to contiune" << endl;
-  getc(stdin);
 
+  getc(stdin);
   return 0;
 }

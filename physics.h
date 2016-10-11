@@ -155,7 +155,7 @@ void updateBrownian(Ball &b) {
 
   for (int i=0; i<3; i++) {
     b.r[i] += b.F[i]/g * _dt;
-    b.r[i] += sqrt(2*D*_dt)*randi.randNorm(0,1); 
+    b.r[i] += sqrt(2*D*_dt) * randi.randNorm(0,1); 
   }
 }
 
@@ -195,7 +195,7 @@ double LJforce(double r, double d) {
     cout << "Warning: LJ Singularity from small r" << endl;
 
   p = _pow(p,6);
-  F = 12.*(e /r)*p*(p - 1);
+  F = 12.*(e/r)*p*(p - 1);
 
   return F;
 }
