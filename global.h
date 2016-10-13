@@ -14,7 +14,8 @@ using namespace std;
 int _tEqGlobal = 500; //time to delay before doing analysis
 int _tEqLocal = 50; //time to delay before making measurements
 
-float _dt = 0.001;  //time step physics
+float _dt = 0.00001;  //time step physics
+//float _dt = 0.001;  //time step physics
 
 int _tSamp = 100;      //time pause rendering
 int _nSteps = 300;

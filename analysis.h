@@ -192,7 +192,9 @@ void writeForceZ(FILE *f) {
   fz = out.first;
   zdev = out.second;
 
-  fprintf(f,"%f %f %f \n",-z,fz,zdev);
+  if (_sunrise) fprintf(f,"%f %f %f \n",z,fz,zdev);
+  else fprintf(f,"%f %f %f \n",-z,fz,zdev);
+
   fStats.clear();
 
   // pass to Energy integrator
@@ -263,10 +265,9 @@ void integrateWrappingEnergy(){
     E += -(Fz * dz);
 
     /* write to file E(z) */
-    fprintf(f7,"%.2f %f\n",-z,E);
-    // z flipped for visual effects...
+    if (_sunrise) fprintf(f7,"%.2f %f\n",z,E);
+    else fprintf(f7,"%.2f %f\n",-z,E);
   }
-
   
 }
 
