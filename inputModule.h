@@ -25,6 +25,17 @@ void process(char* in, std::ifstream &fin) {
     cout << "   " << _nSys << endl;
   }
 
+  if (strcmp(in, "dt") == 0) {
+
+    cout << "reading: " << in << endl;
+    float x; fin >> x; //gets data
+ 
+    cout << "   " << _dt << endl;
+    _dt = x;
+    cout << "   " << _dt << endl;
+  }
+
+
   if (strcmp(in, "tSamp") == 0) {
 
     cout << "reading: " << in << endl;
