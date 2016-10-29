@@ -18,8 +18,11 @@ int main() {
 
 void init() {
 
+  /* Read input, Write Log, Set Output, Seed Rand */
   readInput();
-  //getc(stdin);
+  printLog();
+  fileInit();
+  randInit();
 
   /* Build Cytoskeleton System */
   cout << " initializing system.." << endl;
@@ -27,9 +30,6 @@ void init() {
   spectrinInit(_nSpectrin);
   initParticle();
 
-  /* Set Files and Rand*/
-  randInit();
-  fileInit();
 }
 
 void physics() {

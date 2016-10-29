@@ -182,7 +182,7 @@ double LJforce(double r, double d) {
      but it should be the sum of radii d = (a+b) */
 
   double F, e, m, p;
-  e = 0.01; //epsilon
+  e = _epsilon;
   m = 1.1225 * _sigma; //r_min
   r = r - d + _sigma;
 

@@ -22,22 +22,25 @@ int _nSteps = 300;
 int _tMax = _tEqGlobal + (_tSamp * _nSteps);
 
 int _nSys = 3;  //side length is Twice this #
-int _nSpectrin = 10; //number of spectrin Springs between each actin
 double _lActin = 1.2; //initial length between Actin
-double _pRadius = 1.1 * _lActin; //particle radius
 double _Contour = 2.5 * _lActin;
-float _sigma = 0.1; // for now
-float _dz = -0.013;
+int _nSpectrin = 10; //number of spectrin Springs between each actin
+double _pRadius = 1.1 * _lActin; //particle radius
+
+float _sRadius = 0.1; // for now
+float _sigma = _sRadius;
 
 bool _printTime = true;
 bool _fileTag = false;
 string _tag = "";
 bool _sunrise = false;
 
-double _k = 20; 
 double _m = 1;
+double _k = 20; 
 double _gamma = 1;
 double _D = 0.01;
+double _epsilon = 0.01;
+float _dz = -0.013;
 
 
 /* Class def */

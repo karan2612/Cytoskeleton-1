@@ -1,7 +1,15 @@
-//#include "global.h"
+/* This file includes
+   process()
+   checktime()
+   readInput()
+   we suggest the reader start from the bottom
+
+   printLog()
+ */
 
 #include <fstream>
 #include <iostream>
+#include <ctime>
 
 using namespace std;
 
@@ -140,14 +148,15 @@ void checkTime() {
 }
 
 /* this is the main() file */
+
 void readInput() {
 
   cout << "Reading from file" << endl;   
 
   char data[100];
   ifstream infile; 
-
   infile.open("command.txt");
+
   while (infile >> data) {
 
     process(data, infile);
@@ -155,4 +164,56 @@ void readInput() {
   infile.close();
 
   checkTime();
+}
+
+
+/* append */
+void printLog() {
+
+  cout << "Preparing .log file" << endl;
+  char fname[64] = "";
+
+  if (_fileTag) strcat(fname, _tag.c_str() );
+  else strcat(fname, "temp");
+
+  strcat(fname, ".log");
+  cout << fname << endl;
+
+  std::ofstream log (fname, std::ofstream::out);
+
+  /* time */
+  log << "Time Parameters" << endl;
+  log << " nSteps: " << _nSteps << endl;
+  log << " tSamp: " << _tSamp << endl;
+  log << " tMax: " << _tMax << endl;
+  log << " dt: " << _dt << endl;
+  log << " tEqGlobal: " << _tEqGlobal << endl;
+  log << " tEqLocal: " << _tEqLocal << endl;
+
+
+  /* system */
+  log << "System Parameters" << endl;
+  log << " nSys: " << _nSys << endl;
+  log << " lActin: " << _lActin << endl;
+  log << " Contour: " << _Contour << endl;
+  log << " nSpectrin: " << _nSpectrin << endl;
+  log << " spectrinRadius: " << _sRadius << endl;
+  log << " particleRadius: " << _pRadius << endl;
+  log << " sunrise: " << _sunrise << endl;
+
+  /* physics */
+  log << "Physics Parameters" << endl;
+  log << " D: " << _D << endl;
+  log << " gamma: " << _gamma << endl;
+  log << " epsilon: " << _epsilon << endl;
+  log << " k: " << _k << endl;
+  log << " m: " << _m << endl;
+  log << " dz: " << _dz << endl;
+
+  /* finish */
+  time_t now = time(0);
+  char* cstamp = ctime(&now);
+  log << "Launch time (moscow): " << cstamp << endl;
+  log.close();
+
 }
