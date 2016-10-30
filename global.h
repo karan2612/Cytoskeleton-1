@@ -5,7 +5,9 @@
 #include "MersenneTwister.h"
 
 #define PI 3.14159265
+
 using namespace std;
+string _version = "cytoskel2.0_1030";
 
 /**************
   Control Box
@@ -30,17 +32,17 @@ double _pRadius = 1.1 * _lActin; //particle radius
 float _sRadius = 0.1; // for now
 float _sigma = _sRadius;
 
-bool _printTime = true;
-bool _fileTag = false;
-string _tag = "";
-bool _sunrise = false;
-
 double _m = 1;
 double _k = 20; 
 double _gamma = 1;
 double _D = 0.01;
 double _epsilon = 0.01;
 float _dz = -0.013;
+
+bool _printTime = true;
+bool _fileTag = false;
+bool _sunrise = false;
+string _tag = "";
 
 
 /* Class def */

@@ -13,68 +13,57 @@
 
 using namespace std;
 
+void setDouble(double &param, ifstream &data, char* name){
+
+    double x; data >> x;
+    cout << " Changing: " 
+	 << name << " " 
+	 << param << " -> " 
+	 << x << endl;
+    param = x;
+
+}
+
+void setInt(int &param, ifstream &data, char* name){
+
+    int x; data >> x;
+    cout << " Changing: " 
+	 << name << " " 
+	 << param << " -> " 
+	 << x << endl;
+    param = x;
+
+}
+
+void setFloat(float &param, ifstream &data, char* name){
+
+    float x; data >> x;
+    cout << " Changing: " 
+	 << name << " " 
+	 << param << " -> " 
+	 << x << endl;
+    param = x;
+
+}
+
 void process(char* in, std::ifstream &fin) {
 
-  if (strcmp(in, "SysSize") == 0) {
+  if (strcmp(in, "epsilon") == 0) setDouble(_epsilon, fin, in);
+  if (strcmp(in, "gamma") == 0)   setDouble(_gamma, fin, in);
+  if (strcmp(in, "D") == 0)       setDouble(_D, fin, in);
+  if (strcmp(in, "k") == 0)       setDouble(_k, fin, in);
 
-    cout << "reading: " << in << endl;
-    int x; fin >> x; //gets data
- 
-    cout << "   " << _nSys << endl;
-    _nSys = x;
-    cout << "   " << _nSys << endl;
-  }
-
-  if (strcmp(in, "dt") == 0) {
-
-    cout << "reading: " << in << endl;
-    float x; fin >> x; //gets data
- 
-    cout << "   " << _dt << endl;
-    _dt = x;
-    cout << "   " << _dt << endl;
-  }
+  if (strcmp(in, "nSpectrin") == 0) setInt(_nSpectrin,fin,in);
+  if (strcmp(in, "tEqGlobal") == 0) setInt(_tEqGlobal,fin,in);
+  if (strcmp(in, "tEqLocal") == 0)  setInt(_tEqLocal,fin,in);
+  if (strcmp(in, "SysSize") == 0)   setInt(_nSys,fin,in);
+  if (strcmp(in, "nSteps") == 0)    setInt(_nSteps,fin,in);
+  if (strcmp(in, "tSamp") == 0)     setInt(_tSamp,fin,in);
 
 
-  if (strcmp(in, "tSamp") == 0) {
+  if (strcmp(in, "dt") == 0)  setFloat(_dt,fin,in);
+  if (strcmp(in, "dz") == 0)  setFloat(_dz,fin,in);
 
-    cout << "reading: " << in << endl;
-    int x; fin >> x; //gets data
- 
-    cout << "   " << _tSamp << endl;
-    _tSamp = x;
-    cout << "   " << _tSamp << endl;
-  }
-
-  if (strcmp(in, "tEqLocal") == 0) {
-
-    cout << "reading: " << in << endl;
-    int x; fin >> x; //gets data
- 
-    cout << "   " << _tEqLocal << endl;
-    _tEqLocal = x;
-    cout << "   " << _tEqLocal << endl;
-  }
-
-  if (strcmp(in, "tEqGlobal") == 0) {
-
-    cout << "reading: " << in << endl;
-    int x; fin >> x; //gets data
- 
-    cout << "   " << _tEqGlobal << endl;
-    _tEqGlobal = x;
-    cout << "   " << _tEqGlobal << endl;
-  }
-
-  if (strcmp(in, "nStep") == 0) {
-
-    cout << "reading: " << in << endl;
-    int x; fin >> x; //gets data
- 
-    cout << "   " << _nSteps << endl;
-    _nSteps = x;
-    cout << "   " << _nSteps << endl;
-  }
 
   if (strcmp(in, "Radius") == 0) {
 
@@ -86,15 +75,6 @@ void process(char* in, std::ifstream &fin) {
     cout << "   " << _pRadius << endl;
   }
 
-  if (strcmp(in, "nSpectrin") == 0) {
-
-    cout << "reading: " << in << endl;
-    int n; fin >> n; //gets data
-
-    cout << "   " << _nSpectrin << endl;
-    _nSpectrin = n;
-    cout << "   " << _nSpectrin << endl;
-  }
 
   if (strcmp(in, "SpectrinContour") == 0) {
 
@@ -135,6 +115,7 @@ void process(char* in, std::ifstream &fin) {
     cout << "   " << _sunrise << endl;
   }
 
+
   if (strcmp(in, "Zara") == 0) {
     cout << "true love" << endl;
   }
@@ -169,7 +150,7 @@ void readInput() {
   infile.open("command.txt");
 
   while (infile >> data) {
-
+    //    cout << "loop" << endl;
     process(data, infile);
   }
   infile.close();
@@ -188,7 +169,7 @@ void printLog() {
   else strcat(fname, "temp");
 
   strcat(fname, ".log");
-  cout << fname << endl;
+  cout << " writing to " << fname << endl;
 
   std::ofstream log (fname, std::ofstream::out);
 
@@ -198,8 +179,8 @@ void printLog() {
   log << " tSamp: " << _tSamp << endl;
   log << " tMax: " << _tMax << endl;
   log << " dt: " << _dt << endl;
-  log << " tEqGlobal: " << _tEqGlobal << endl;
   log << " tEqLocal: " << _tEqLocal << endl;
+  log << " tEqGlobal: " << _tEqGlobal << endl;
 
 
   /* system */
@@ -225,6 +206,7 @@ void printLog() {
   time_t now = time(0);
   char* cstamp = ctime(&now);
   log << "Launch time (moscow): " << cstamp << endl;
+  log << " w version: " << _version << endl;
   log.close();
 
 }

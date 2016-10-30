@@ -21,7 +21,6 @@ void init() {
   /* Read input, Write Log, Set Output, Seed Rand */
   readInput();
   printLog();
-  fileInit();
   randInit();
 
   /* Build Cytoskeleton System */
@@ -29,6 +28,7 @@ void init() {
   meshInit();
   spectrinInit(_nSpectrin);
   initParticle();
+  fileInit();
 
 }
 
