@@ -16,7 +16,7 @@ string _version = "cytoskel2.0_1030";
 int _tEqGlobal = 500; //time to delay before doing analysis
 int _tEqLocal = 50; //time to delay before making measurements
 
-float _dt = 0.001;  //time step physics
+float _dt = 0.00001;  //time step physics
 
 int _tSamp = 100;      //time pause rendering
 int _nSteps = 300;
@@ -33,8 +33,8 @@ double _Contour = 2.5 * _lActin;
 double _m = 1;
 double _k = 20; 
 double _gamma = 1;
-double _D = 0.01;
-double _epsilon = 0.01;
+double _D = 1;
+double _epsilon = 1;
 float _dz = -0.013;
 
 bool _Particle = true;
