@@ -16,7 +16,6 @@ string _version = "cytoskel2.0_1030";
 int _tEqGlobal = 500; //time to delay before doing analysis
 int _tEqLocal = 50; //time to delay before making measurements
 
-//float _dt = 0.00001;  //time step physics
 float _dt = 0.001;  //time step physics
 
 int _tSamp = 100;      //time pause rendering
@@ -24,13 +23,12 @@ int _nSteps = 300;
 int _tMax = _tEqGlobal + (_tSamp * _nSteps);
 
 int _nSys = 3;  //side length is Twice this #
-double _lActin = 1.2; //initial length between Actin
-double _Contour = 2.5 * _lActin;
 int _nSpectrin = 10; //number of spectrin Springs between each actin
+double _lActin = 1.2; //initial length between Actin
+float _sRadius = _lActin / 32;
+float _sigma = _sRadius * 2;
 double _pRadius = 1.1 * _lActin; //particle radius
-
-float _sRadius = 0.1; // for now
-float _sigma = _sRadius;
+double _Contour = 2.5 * _lActin;
 
 double _m = 1;
 double _k = 20; 
@@ -39,6 +37,8 @@ double _D = 0.01;
 double _epsilon = 0.01;
 float _dz = -0.013;
 
+bool _Particle = true;
+bool _ankyrin = true;
 bool _printTime = true;
 bool _fileTag = false;
 bool _sunrise = false;
@@ -114,9 +114,16 @@ vector<Elem> v_elems;
 vector<Edge> v_edges;
 
 vector<float> conTime;
-vector<float> fStats;
+vector<float> zStats;
+vector<float> zPlus;
+vector<float> zMinus;
+
 vector< vector<float> > forceST(3);
 vector< pair<float,float> > forceTime; //(z,Fz)_t
+
+
+bool _samp;
+bool localEq(int);
 
 void init();
 void meshInit();
@@ -131,7 +138,7 @@ void filesClose();
 void moveParticle();
 
 void physics();
-void timeStep(int);
+void timeStep();
 void doAnalysis();
 void ForceSprings();
 void updatePosition(Ball &);
@@ -160,7 +167,7 @@ void measureContour(FILE*);
 void sampleForceZ();
 void sampleForce3D();
 void show();
-//void writeKaranXY(FILE*,FILE*);
+
 
 /* function def */
 Ball::Ball (double x, double y, double z) {

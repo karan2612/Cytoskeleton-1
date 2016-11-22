@@ -1,4 +1,9 @@
 /* This file includes
+   setDouble()
+   setFloat()
+   setInt()
+   setBool()
+
    process()
    checktime()
    readInput()
@@ -16,7 +21,7 @@ using namespace std;
 void setDouble(double &param, ifstream &data, char* name){
 
     double x; data >> x;
-    cout << " Changing: " 
+    cout << " changing: " 
 	 << name << " " 
 	 << param << " -> " 
 	 << x << endl;
@@ -27,7 +32,7 @@ void setDouble(double &param, ifstream &data, char* name){
 void setInt(int &param, ifstream &data, char* name){
 
     int x; data >> x;
-    cout << " Changing: " 
+    cout << " changing: " 
 	 << name << " " 
 	 << param << " -> " 
 	 << x << endl;
@@ -38,7 +43,18 @@ void setInt(int &param, ifstream &data, char* name){
 void setFloat(float &param, ifstream &data, char* name){
 
     float x; data >> x;
-    cout << " Changing: " 
+    cout << " changing: " 
+	 << name << " " 
+	 << param << " -> " 
+	 << x << endl;
+    param = x;
+
+}
+
+void setBool(bool &param, ifstream &data, char* name){
+
+    bool x; data >> x;
+    cout << " set: " 
 	 << name << " " 
 	 << param << " -> " 
 	 << x << endl;
@@ -60,9 +76,23 @@ void process(char* in, std::ifstream &fin) {
   if (strcmp(in, "nSteps") == 0)    setInt(_nSteps,fin,in);
   if (strcmp(in, "tSamp") == 0)     setInt(_tSamp,fin,in);
 
-
   if (strcmp(in, "dt") == 0)  setFloat(_dt,fin,in);
   if (strcmp(in, "dz") == 0)  setFloat(_dz,fin,in);
+
+  if (strcmp(in, "Print") == 0) setBool(_printTime,fin,in);
+  if (strcmp(in, "Sunrise") == 0) setBool(_sunrise,fin,in);
+  if (strcmp(in, "Ankyrin") == 0) setBool(_ankyrin,fin,in);
+  if (strcmp(in, "Particle") == 0)  setBool(_Particle,fin,in);
+
+
+  if (strcmp(in, "Tag") == 0) {
+
+    cout << "reading: " << in << endl;
+   
+    _fileTag = true;
+    fin >> _tag;
+    cout << "   " << _tag << endl;
+  }
 
 
   if (strcmp(in, "Radius") == 0) {
@@ -85,36 +115,6 @@ void process(char* in, std::ifstream &fin) {
     _Contour = c * _lActin;
     cout << "   " << _Contour << endl;
   }
-
-  if (strcmp(in, "Tag") == 0) {
-
-    cout << "reading: " << in << endl;
-   
-    _fileTag = true;
-    fin >> _tag;
-    cout << "   " << _tag << endl;
-  }
-
-  if (strcmp(in, "Print") == 0) {
-
-    cout << "reading: " << in << endl;
-    bool p; fin >> p;
-
-    cout << "   " << _printTime << endl;
-    _printTime = p;
-    cout << "   " << _printTime << endl;
-  }
-
-  if (strcmp(in, "Sunrise") == 0) {
-
-    cout << "reading: " << in << endl;
-    bool p; fin >> p;
-
-    cout << "   " << _sunrise << endl;
-    _sunrise = p;
-    cout << "   " << _sunrise << endl;
-  }
-
 
   if (strcmp(in, "Zara") == 0) {
     cout << "true love" << endl;
@@ -172,6 +172,7 @@ void printLog() {
   cout << " writing to " << fname << endl;
 
   std::ofstream log (fname, std::ofstream::out);
+  log << endl;
 
   /* time */
   log << "Time Parameters" << endl;
@@ -189,8 +190,8 @@ void printLog() {
   log << " lActin: " << _lActin << endl;
   log << " Contour: " << _Contour << endl;
   log << " nSpectrin: " << _nSpectrin << endl;
-  log << " spectrinRadius: " << _sRadius << endl;
   log << " particleRadius: " << _pRadius << endl;
+  log << " spectrinRadius: " << _sRadius << endl;
   log << " sunrise: " << _sunrise << endl;
 
   /* physics */

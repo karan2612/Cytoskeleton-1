@@ -116,15 +116,15 @@ void SurfaceForce() {
   int N = nBalls;
   Ball *b;
 
-  int isActin;  
+  bool inMembrane = false;
   for (size_t j=0; j<N; j++) {
     b = & v_balls[j];
-    isActin = b->pid; 
 
-    //if (isActin > 0) { //is equivalent
-    if (isActin) {
-      b->r[2] = zSurface(b->r[0],
-			 b->r[1]); //better way?
+    if (b->pid == 1) inMembrane = true;
+    if (b->pid == 3) inMembrane = true;
+
+    if (inMembrane) {
+      b->r[2] = zSurface(b->r[0], b->r[1]); 
       continue;
     } 
 
@@ -154,6 +154,11 @@ void updateBrownian(Ball &b) {
   double g = _gamma;
 
   for (int i=0; i<3; i++) {
+
+    if (i==2) {
+      if (b.pid==1 || b.pid==3) continue;
+    }
+
     b.r[i] += b.F[i]/g * _dt;
     b.r[i] += sqrt(2*D*_dt) * randi.randNorm(0,1); 
   }
@@ -201,31 +206,32 @@ double LJforce(double r, double d) {
 }
 
 
+/* returns Membrane z(x,y) */
 double zSurface(double x, double y) {
-  /* returns Membrane z(x,y) */
 
-  //temp flat
-  return 0.1;
+  return 0.1;   //temp flat
 }
+
 
 
 /* played at each Physics step */
 void ParticleInteraction() {
 
-  if (!Particle) {
-    cout << "particle not initialized!" << endl;
-    getc(stdin);
+  if(!_Particle) {
+    return;
   }
- 
-  double radius = Particle->R;
-  double r,d;
-  vector<float> nm;
-  double F;
 
-  int N = nBalls;
-  int count = 0;
+  double radius = Particle->R;
+  double r,d,F;
+  vector<float> nm; //normal
+
+  float zp = 0; 
+  float zm = 0;
+
   Ball *b;
-  //  cout << "***time step***" << endl;
+
+  int count = 0;
+  int N = nBalls;
   for (int j=0; j<N; j++) {
     
     b = & v_balls.at(j);
@@ -241,15 +247,12 @@ void ParticleInteraction() {
 	b->F[i] += F * nm[i];
       }
 
-    } else 
-    {
-      if (r > 1.5 * radius) {
-	//somehow count skips?
-	continue;
-      }
-      count++;
+    } else { 
 
-      d = (_sigma/2) + radius; // R_part + R_interactant
+      if (r > 1.5 * radius) continue;
+
+      count++;
+      d = radius + (_sigma/2); // R_particle + R_interactant
       F = LJforce(r,d);
 
       for (int i=0; i<3; i++) {
@@ -257,7 +260,23 @@ void ParticleInteraction() {
 	Particle->F[i] += F *  nm[i];
       }
 
+
+      // NEW
+      float fz = F * nm[2];
+      if ( fz > 0 ) zp += fz;
+      if ( fz < 0 ) zm += fz;
+
     }
 
   } //end of interactant loop  
+
+
+  if (_samp) {
+    float z = Particle->F[2];
+    zStats.push_back(z); 
+
+    zPlus.push_back(zp);
+    zMinus.push_back(zm);
+  }
+
 }

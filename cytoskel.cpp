@@ -43,10 +43,12 @@ void physics() {
 
   float T=0; //elapsed time
   int t=0, t_count=0;
-  //  while (T<tmax) {
+
   while (t < _tMax) {
 
-    timeStep(t);
+    _samp = localEq(t);
+
+    timeStep();
     t++;
     T += _dt;
 
@@ -68,14 +70,13 @@ void physics() {
   cout << "   final system time : " << T << endl;
   
   integrateWrappingEnergy();
-  //  writeForce3D();
 
   cout << " finished physics.." << endl;
 }
 
 
 /* Everything here called once per Physics time step */
-void timeStep(int t) {
+void timeStep() {
 
   size_t N = nBalls;
 
@@ -84,13 +85,14 @@ void timeStep(int t) {
     for (size_t j=0; j<N; j++) {
       v_balls[j].F[i] = 0;
     }
-    Particle->F[i] = 0;
+    if(_Particle) Particle->F[i] = 0;
   }
 
   /* Tally Forces */
   ForceSprings();
   SurfaceForce();
   ParticleInteraction();
+
 
   /* Update Particles */
   for (size_t j=0; j<N; j++) {
@@ -100,24 +102,24 @@ void timeStep(int t) {
     updateBrownian(v_balls[j]); 
   }
 
-  if ( (t % _tSamp) > _tEqLocal) {
-    sampleForceZ();
-  }
 
 }
 
 /* this function is called once every (_tSamp) */
 void doAnalysis() {
  
-  /* make measurements */
-  sampleForce3D();
-  writeForceZ(f6); //mean Fz discovered in here!
-
   /* write for rendering */
   writeBalls(f1);
   writeSprings(f2);
 
+  if (!_Particle) return;
+
+  /* make measurements */
+  writeForceZ(f6); //mean Fz discovered in here!
+  //  writeForce3D();
+
   /* move Particle */
   Particle->r[2] += _dz; 
+  
 }
  

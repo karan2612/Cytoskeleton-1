@@ -162,17 +162,19 @@ float sampleContour() {
   return C;
 }
 
+/* checks to see whether sys should equilibriate */
+bool localEq(int t) {
 
-/* fills Force vector for analysis */
-void sampleForceZ() {
+  bool samp = true;
 
-  float z = Particle->F[2];
-  //  cout << z << endl;
-  fStats.push_back(z); //stores Force statistics
+  if ( (t % _tSamp) < _tEqLocal) samp = false;
 
-  //maybe this needs to be normalized 
-  //  by the number of interacting spectrin particles..
+  return samp;
 }
+
+
+//possibly redundant
+/* fills Force vector for analysis */
 
 
 /* called between n sample steps
@@ -181,21 +183,25 @@ void sampleForceZ() {
    and writes to file */
 void writeForceZ(FILE *f) {
 
-  pair<float,float> out;
+  pair<float,float> zforce, zp, zm;
+  zforce = doStats(zStats); //calculations Here
 
-  out = doStats(fStats); //calculations Here
+  zp = doStats(zPlus);
+  zm = doStats(zMinus);
 
   //  show();
 
   float fz,z,zdev;
   z = Particle->r[2];
-  fz = out.first;
-  zdev = out.second;
+  fz = zforce.first;
+  zdev = zforce.second;
 
-  if (_sunrise) fprintf(f,"%f %f %f \n",z,fz,zdev);
-  else fprintf(f,"%f %f %f \n",-z,fz,zdev);
+  if (!_sunrise) fprintf(f,"%f %f %f %f %f\n",-z,fz,zdev, zp.first,zm.first);
+  else fprintf(f,"%f %f %f \n",z,fz,zdev); //can update
 
-  fStats.clear();
+  zStats.clear();
+  zPlus.clear();
+  zMinus.clear();
 
   // pass to Energy integrator
   pair<float,float> in(z,fz);
@@ -322,14 +328,15 @@ pair<float,float> doStats(vector<float> &v) {
 }
 
 
-
 void show() {
   cout << "showing..." << endl;
+  Ball* b;
+  int N = v_balls.size();
+  for (int j=0; j<N; j++) {
+    b = &v_balls[j];
 
-  int N = fStats.size();
-  cout << N << endl;
-  for (int j=0; j<N;j++) {
-    cout << fStats[j] << endl;
+    cout << " pid: " << b->pid
+	 << " rad " << b->R << endl;
   }
   cout << "done" << endl;
 

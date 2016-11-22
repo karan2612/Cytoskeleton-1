@@ -43,27 +43,33 @@ int main() {
 
     dataBalls >> pid;
     /* Particle ID
-       0: middle, white
+       0: spectrin, white
        1: anchor, red
        2: edge, blue
+       3: ankyrin, orange
     */
     if (pid == 0) {
       colors[3*i + 0] = 1;
       colors[3*i + 1] = 1;
       colors[3*i + 2] = 1;
-      radii[i] = 0.1;
-
+      radii[i] = 0.05;
     } else if (pid == 2)  
     {
-      colors[3*i + 0] = 0.3;
+      colors[3*i + 0] = 0;
       colors[3*i + 1] = 0;
       colors[3*i + 2] = 1;
-      radii[i] = 0.2;
+      radii[i] = 0.18;
+    } else if (pid == 3)  
+    {
+      colors[3*i + 0] = 1;
+      colors[3*i + 1] = 0.5;
+      colors[3*i + 2] = 0;
+      radii[i] = 0.1;
     } else {
       colors[3*i + 0] = 1;
       colors[3*i + 1] = 0;
       colors[3*i + 2] = 0;
-      radii[i] = 0.2;
+      radii[i] = 0.18;
     }
 
   }

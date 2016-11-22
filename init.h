@@ -221,6 +221,9 @@ void spectrinInit(int n) {
 
       Ball b(x,y,z);
       b.pid = 0; //denotes spectrin
+      if (_ankyrin) {
+	if (i==n/2) b.pid = 3; // new ankyrin
+      }
       v_balls.push_back(b);
     }
 
@@ -245,6 +248,11 @@ void spectrinInit(int n) {
 
 
 void initParticle() {
+
+  if(!_Particle) {
+    cout << " * skipping particle init!" << endl;
+    return;
+  }
 
   /* Let wrapping fraction c (0,2)
      then z = c * R (if z = 0, c=0, at psi=0)
@@ -281,14 +289,23 @@ void fileInit() {
   //  f4 = fopen("contour.txt", "w");
   //  f5 = fopen("part.txt", "w");
 
-  char tag6[32] = "zForce.txt";
-  char tag7[32] = "WrappingEnergy.txt";
+  //  strcat(tag6, _tag.c_str());
+  //  strcat(tag7, _tag.c_str());
+  if (_fileTag) {
+    //    string temp;
+    string s6 = string("zForce.") + _tag + string(".txt");
+    string s7 = string("WrappingEnergy.") + _tag + string(".txt");
 
-  strcat(tag6, _tag.c_str());
-  strcat(tag7, _tag.c_str());
+    f6 = fopen(s6.c_str(), "w");
+    f7 = fopen(s7.c_str(), "w");
 
-  f6 = fopen(tag6, "w");
-  f7 = fopen(tag7, "w");
+  } else {
+    char tag6[32] = "zForce.txt";
+    char tag7[32] = "WrappingEnergy.txt";
+
+    f6 = fopen(tag6, "w");
+    f7 = fopen(tag7, "w");
+  }
 
   /* Writes nTime, nBalls, and nSprings */
   nBalls = v_balls.size();
@@ -325,7 +342,7 @@ void initPID() {
   int N = nBalls;
   for(int j=0; j<N; j++) { 
 
-    //write pid (1-anchor, 0-spectrin)
+    //write pid (1-anchor, 0-spectrin, 2-boarder, 3-ankyrin)
     fprintf(f1, " %i", v_balls[j].pid);
   }
   fprintf(f1, "\n\n");
