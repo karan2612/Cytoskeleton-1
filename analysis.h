@@ -186,10 +186,9 @@ void writeForceZ(FILE *f) {
   pair<float,float> zforce, zp, zm;
   zforce = doStats(zStats); //calculations Here
 
+  //  show();
   zp = doStats(zPlus);
   zm = doStats(zMinus);
-
-  //  show();
 
   float fz,z,zdev;
   z = Particle->r[2];
@@ -330,15 +329,10 @@ pair<float,float> doStats(vector<float> &v) {
 
 void show() {
   cout << "showing..." << endl;
-  Ball* b;
-  int N = v_balls.size();
-  for (int j=0; j<N; j++) {
-    b = &v_balls[j];
 
-    cout << " pid: " << b->pid
-	 << " rad " << b->R << endl;
-  }
-  cout << "done" << endl;
+  cout << zStats.size() << " "
+       << zPlus.size()  << " "
+       << zMinus.size() << endl;
 
   getc(stdin);
 }
