@@ -24,7 +24,7 @@ int _tMax = _tEqGlobal + (_tSamp * _nSteps);
 
 int _nSys = 3;  //side length is Twice this #
 int _nSpectrin = 10; //number of spectrin Springs between each actin
-double _lActin = 1.2; //initial length between Actin
+double _lActin = 1; //initial length between Actin
 float _sRadius = _lActin / 32;
 float _sigma = _sRadius * 2;
 double _pRadius = 1.1 * _lActin; //particle radius
@@ -39,9 +39,11 @@ float _dz = -0.013;
 
 bool _Particle = true;
 bool _ankyrin = true;
+bool _surface = true; //determines whether to reflect spectrin
+bool _sunrise = false;
+bool _SingleSpring = false;
 bool _printTime = true;
 bool _fileTag = false;
-bool _sunrise = false;
 string _tag = "";
 
 
@@ -130,6 +132,8 @@ void meshInit();
 void springInit();
 void spectrinInit(int);
 void elemInit();
+
+void toyInit();
 
 void initParticle();
 void initPID();

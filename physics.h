@@ -129,6 +129,8 @@ void SurfaceForce() {
     } 
 
     //else: is spectrin
+    if (!_surface) continue;
+
     double x,y,z,z0;  
     double r,F;
     x = b->r[0];
@@ -149,7 +151,6 @@ void SurfaceForce() {
 
 void updateBrownian(Ball &b) {
 
-  //double D = 0.01;
   double D = _D;
   double g = _gamma;
 

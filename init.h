@@ -16,7 +16,15 @@
     toyInit()
  */
 
+
 void meshInit() {
+
+  /* Escape route to simulate Entropic Spring */
+  if (_SingleSpring) {
+    cout << "** Skipping Mesh init!" << endl;
+    toyInit();
+    return;
+  }
 
   int N=_nSys;
   double L = _lActin;
@@ -286,16 +294,18 @@ void fileInit() {
   f1 = fopen("balls.dat", "w");
   f2 = fopen("springs.dat", "w");
   //  f3 = fopen("force.txt", "w");
-  //  f4 = fopen("contour.txt", "w");
+
   //  f5 = fopen("part.txt", "w");
 
   //  strcat(tag6, _tag.c_str());
   //  strcat(tag7, _tag.c_str());
   if (_fileTag) {
     //    string temp;
-    string s6 = string("zForce.") + _tag + string(".txt");
+    string s4 = string("contour.") + _tag + string(".txt");
+    string s6 = string("zForce.")  + _tag + string(".txt");
     string s7 = string("WrappingEnergy.") + _tag + string(".txt");
 
+    f4 = fopen(s4.c_str(), "w");
     f6 = fopen(s6.c_str(), "w");
     f7 = fopen(s7.c_str(), "w");
 
@@ -319,17 +329,16 @@ void fileInit() {
   fprintf(f1, "%i\n\n" , nBalls);
   fprintf(f2, "%i\n\n" , nSprings);
 
-  initPID();
 }
 
 void filesClose() {
   fclose(f1);
   fclose(f2);
+  fclose(f4);
   fclose(f6);
   fclose(f7);
   /*
   fclose(f3);
-  fclose(f4);
   fclose(f5);
   */
 
@@ -339,7 +348,7 @@ void filesClose() {
 /* writes PID */
 void initPID() {
 
-  int N = nBalls;
+  int N = v_balls.size();
   for(int j=0; j<N; j++) { 
 
     //write pid (1-anchor, 0-spectrin, 2-boarder, 3-ankyrin)
@@ -374,3 +383,4 @@ void sysConfig() {
   }
 
 }
+

@@ -130,19 +130,25 @@ void measureContour(FILE *f) {
 
   Spring *s;
   float C=0; //contour
+
   for(int j=0; j<N; j++) {
+
 
     s = &v_springs.at(j);
     C += s->getLength();
-
+    
     if (j == 0) continue;
+
     if ((j+1) % n == 0) {
-      fprintf(f, "%f ", C);
+      cerr << "bar1" << endl;
+      //      fprintf(f, "%f ", C);
       C = 0;
     }
   }
 
+  cerr << "bar2" << endl;
   fprintf(f,"\n");
+  cerr << "bar3" << endl;
 }
 
 

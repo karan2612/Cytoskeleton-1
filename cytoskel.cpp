@@ -4,6 +4,7 @@
 #include "analysis.h"
 
 #include "inputModule.h"
+#include "toyInit.h"
 
 int main() {
 
@@ -25,12 +26,15 @@ void init() {
 
   /* Build Cytoskeleton System */
   cout << " initializing system.." << endl;
+
   meshInit();
   spectrinInit(_nSpectrin);
   initParticle();
   fileInit();
+  initPID(); //***
 
 }
+
 
 void physics() {
 
@@ -40,6 +44,8 @@ void physics() {
      _tSamp - (int) time step output */
 
   cout << " beginning physics.." << endl;
+
+
 
   float T=0; //elapsed time
   int t=0, t_count=0;
@@ -56,6 +62,7 @@ void physics() {
     if (t < _tEqGlobal) continue;
 
     if (t % _tSamp == 0) { 
+
 
       t_count++;
       doAnalysis();
@@ -112,9 +119,12 @@ void doAnalysis() {
   writeBalls(f1);
   writeSprings(f2);
 
-  if (!_Particle) return;
-
   /* make measurements */
+
+  //  measureContour(f4);
+
+
+  if (!_Particle) return;
   writeForceZ(f6); //mean Fz discovered in here!
   //  writeForce3D();
 
