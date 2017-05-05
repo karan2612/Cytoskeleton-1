@@ -79,7 +79,9 @@ void springInit() {
 	v_springs.push_back(s);
       }
 
-      if (y == n-1) continue;
+      if (y == n-1) continue; 
+      // nothing to do for last row
+
       Spring s1(j, j+n);
       v_springs.push_back(s1);
 
@@ -106,6 +108,7 @@ void springInit() {
    e1 and e0 stand for elemUP and elemDOWN respectively,
   where an element is the triangular surface element connecting 3 balls
 */
+// : The element and edge code is geometry for membrane, which is under development
 void elemInit() {
 
   Elem *e0, *e1;

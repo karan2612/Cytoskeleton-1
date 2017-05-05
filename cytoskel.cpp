@@ -8,7 +8,8 @@
 
 int main() {
 
-  cout << "hello world!" << endl;
+  cout << "Welcome to FZJ Cytoskeleton simulation!" << endl;
+  //cout << "hello world!" << endl;
 
   init();
   physics();
@@ -46,13 +47,12 @@ void physics() {
   cout << " beginning physics.." << endl;
 
 
-
   float T=0; //elapsed time
   int t=0, t_count=0;
 
   while (t < _tMax) {
 
-    _samp = localEq(t);
+    _samp = localEq(t); // _samp is global boolean used elsewhere
 
     timeStep();
     t++;
@@ -63,13 +63,14 @@ void physics() {
 
     if (t % _tSamp == 0) { 
 
+      	t_count++;
+      	doAnalysis();
 
-      t_count++;
-      doAnalysis();
-
-      if (_printTime) {
-	cerr << t_count << "\r";
-      }
+      	// monitors simulation progress, by printing to terminal
+      	if (_printTime) 	
+		cerr << t_count << "\r"
+		;
+      
     }
   }
 

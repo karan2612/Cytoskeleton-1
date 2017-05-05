@@ -262,7 +262,8 @@ void ParticleInteraction() {
       }
 
 
-      // NEW
+      // Splits Force into Positive and Negative containers 
+      // for separate analysis
       float fz = F * nm[2];
       if ( fz > 0 ) zp += fz;
       if ( fz < 0 ) zm += fz;
