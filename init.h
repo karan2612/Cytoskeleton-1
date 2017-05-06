@@ -202,7 +202,7 @@ void spectrinInit(int n) {
 
   double A = _lActin;
   double C = _Contour;
-  double h = sqrt(C*C + A*A) / 2; //creates dagger strings
+  double h = sqrt(C*C - A*A) / 2; //creates dagger strings
 
   vector<Spring> newSpring_v;
   //for each spring
